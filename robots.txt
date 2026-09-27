@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /material/
+
+Sitemap: https://refrimundo.com.ar/sitemap.xml
