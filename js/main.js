@@ -39,6 +39,13 @@
     });
   });
 
+  // Medir los clics hacia la tienda de Mercado Libre
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href*="mercadolibre.com"]');
+    if (!link || typeof window.gtag !== 'function') return;
+    window.gtag('event', 'visita_mercadolibre', { link_url: link.href });
+  });
+
   // Año actual en el pie
   document.getElementById('year').textContent = new Date().getFullYear();
 
