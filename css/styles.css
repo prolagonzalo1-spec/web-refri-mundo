@@ -304,6 +304,20 @@ p { margin: 0 0 1em; }
 .product__img img { width: 100%; height: 100%; object-fit: cover; }
 .product__body { padding: 22px 24px 26px; }
 .product__body p { color: var(--muted); font-size: .94rem; margin: 0; }
+.product__img img { transition: transform .35s ease; }
+a.product:hover .product__img img { transform: scale(1.04); }
+a.product:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 3px; }
+a.product .product__body { display: flex; flex-direction: column; flex: 1; }
+a.product .product__body p { margin-bottom: 14px; }
+.product__cta {
+  display: inline-block;
+  margin-top: auto;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--royal);
+}
+a.product:hover .product__cta { text-decoration: underline; text-underline-offset: 3px; }
 .product--more {
   background: linear-gradient(160deg, var(--royal) 0%, var(--navy) 100%);
   color: #d9e4fb;
