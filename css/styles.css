@@ -246,15 +246,11 @@ p { margin: 0 0 1em; }
 .about__text p:not(.eyebrow) { color: var(--muted); font-size: 1.05rem; }
 .about__media {
   margin: 0;
-  background: linear-gradient(180deg, #f6f8fc, var(--ice));
   border-radius: var(--radius);
-  padding: 20px;
-  max-height: 520px;
-  display: flex;
-  justify-content: center;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
-.about__media img { max-height: 480px; width: auto; object-fit: contain; mix-blend-mode: multiply; }
+.about__media img { width: 100%; height: auto; }
 
 .values {
   display: grid;
@@ -492,8 +488,6 @@ p { margin: 0 0 1em; }
 
   .hero__inner { grid-template-columns: 1fr; gap: 40px; padding-top: 56px; padding-bottom: 88px; }
   .about, .shipping { grid-template-columns: 1fr; gap: 40px; }
-  .about__media { max-height: 420px; }
-  .about__media img { max-height: 380px; }
   .values { grid-template-columns: repeat(2, 1fr); margin-top: 56px; }
   .steps { grid-template-columns: 1fr; }
   .contact { grid-template-columns: 1fr; }
