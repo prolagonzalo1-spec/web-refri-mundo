@@ -28,6 +28,17 @@
     if (e.key === 'Escape') setMenu(false);
   });
 
+  // Medir los clics en WhatsApp (Google Analytics / Google Ads)
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest && e.target.closest('a[href*="wa.me"]');
+    if (!link || typeof window.gtag !== 'function') return;
+    var section = link.closest('section, header, footer');
+    window.gtag('event', 'contacto_whatsapp', {
+      link_url: link.href,
+      ubicacion: link.classList.contains('wa-float') ? 'boton-flotante' : (section && section.id) || 'encabezado'
+    });
+  });
+
   // Año actual en el pie
   document.getElementById('year').textContent = new Date().getFullYear();
 
