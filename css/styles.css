@@ -100,6 +100,8 @@ p { margin: 0 0 1em; }
 }
 .btn--wa { background: var(--wa); color: var(--white); box-shadow: 0 8px 20px rgba(31, 174, 87, .28); }
 .btn--wa:hover { background: var(--wa-600); }
+.btn--ml { background: #ffe600; color: var(--navy-900); box-shadow: 0 8px 20px rgba(255, 230, 0, .18); }
+.btn--ml:hover { background: #f5dc00; }
 .btn--ghost { border-color: rgba(255, 255, 255, .45); color: var(--white); }
 .btn--ghost:hover { background: rgba(255, 255, 255, .1); border-color: var(--white); }
 .btn--sm { padding: .6em 1.1em; font-size: .88rem; }
