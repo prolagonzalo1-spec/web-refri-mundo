@@ -246,15 +246,11 @@ p { margin: 0 0 1em; }
 .about__text p:not(.eyebrow) { color: var(--muted); font-size: 1.05rem; }
 .about__media {
   margin: 0;
-  background: linear-gradient(180deg, #f6f8fc, var(--ice));
   border-radius: var(--radius);
-  padding: 20px;
-  max-height: 520px;
-  display: flex;
-  justify-content: center;
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
-.about__media img { max-height: 480px; width: auto; object-fit: contain; mix-blend-mode: multiply; }
+.about__media img { width: 100%; height: auto; }
 
 .values {
   display: grid;
@@ -306,9 +302,22 @@ p { margin: 0 0 1em; }
   overflow: hidden;
 }
 .product__img img { width: 100%; height: 100%; object-fit: cover; }
-.product:first-child .product__img img { object-fit: contain; padding: 12px; mix-blend-mode: multiply; }
 .product__body { padding: 22px 24px 26px; }
 .product__body p { color: var(--muted); font-size: .94rem; margin: 0; }
+.product__img img { transition: transform .35s ease; }
+a.product:hover .product__img img { transform: scale(1.04); }
+a.product:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 3px; }
+a.product .product__body { display: flex; flex-direction: column; flex: 1; }
+a.product .product__body p { margin-bottom: 14px; }
+.product__cta {
+  display: inline-block;
+  margin-top: auto;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--royal);
+}
+a.product:hover .product__cta { text-decoration: underline; text-underline-offset: 3px; }
 .product--more {
   background: linear-gradient(160deg, var(--royal) 0%, var(--navy) 100%);
   color: #d9e4fb;
@@ -493,8 +502,6 @@ p { margin: 0 0 1em; }
 
   .hero__inner { grid-template-columns: 1fr; gap: 40px; padding-top: 56px; padding-bottom: 88px; }
   .about, .shipping { grid-template-columns: 1fr; gap: 40px; }
-  .about__media { max-height: 420px; }
-  .about__media img { max-height: 380px; }
   .values { grid-template-columns: repeat(2, 1fr); margin-top: 56px; }
   .steps { grid-template-columns: 1fr; }
   .contact { grid-template-columns: 1fr; }
@@ -511,7 +518,6 @@ p { margin: 0 0 1em; }
   .trust__item { padding: 18px 20px; }
   .values { grid-template-columns: 1fr; }
   .products { grid-template-columns: 1fr; }
-  .product__img { aspect-ratio: 4 / 3.4; }
   .shipping__gallery { grid-template-rows: 180px 200px; }
   .contact__main, .contact__hours { padding: 32px 22px; }
   .contact__main .btn { width: 100%; }
