@@ -8,7 +8,7 @@
   var WHATSAPP = '5491125291029';
   // URL del programa de Cloudflare que lee el Excel de OneDrive.
   // Mientras esté vacía, se usan los precios de data/productos.json.
-  var PRECIOS_URL = '';
+  var PRECIOS_URL = 'https://refrimundo-precios.prolagonzalo1.workers.dev/';
   var RESPALDO_URL = 'data/productos.json';
   var STORAGE_KEY = 'refrimundo-combo';
 
