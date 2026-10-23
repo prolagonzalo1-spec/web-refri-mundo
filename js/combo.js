@@ -36,9 +36,12 @@
   var EXCLUIR = [/recuperadora/];
 
   // Fotos de cada producto (se buscan por palabras del nombre).
+  // "nota" es un texto opcional que se muestra debajo del nombre.
   var FOTOS = [
     { test: /manifold.*(bluetooth|pinza)/, src: 'img/manifold-digital.webp' },
-    { test: /\bdvr\s*2a\b/, src: 'img/bomba-vacio.webp' },
+    // Las 4 bombas DVR usan la misma foto (en el Excel la 4A figura como "DVP 4A").
+    { test: /\b(dvr|dvp)\s*[1-4]a\b/, src: 'img/bomba-vacio.webp',
+      nota: 'Imagen ilustrativa de la línea DVR. Cambia la capacidad.' },
     { test: /vacuometro/, src: 'img/vacuometro.webp' }
   ];
 
@@ -98,9 +101,9 @@
   function fotoDe(nombre) {
     var n = normalizar(nombre);
     for (var i = 0; i < FOTOS.length; i++) {
-      if (FOTOS[i].test.test(n)) return FOTOS[i].src;
+      if (FOTOS[i].test.test(n)) return FOTOS[i];
     }
-    return '';
+    return {};
   }
   function guardar() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ carrito: carrito, datos: datos })); } catch (e) {}
@@ -129,12 +132,14 @@
             !EXCLUIR.some(function (re) { return re.test(normalizar(p.nombre)); });
         })
         .map(function (p) {
+          var foto = fotoDe(p.nombre);
           return {
             id: slug(p.nombre),
             nombre: String(p.nombre).replace(/\s+/g, ' ').trim(),
             precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
             cat: categoriaDe(p.nombre),
-            foto: fotoDe(p.nombre)
+            foto: foto.src || '',
+            nota: foto.nota || ''
           };
         });
     });
@@ -200,6 +205,7 @@
       '<div class="pcard__img">' + foto + '</div>' +
       '<div class="pcard__body">' +
         '<h3 class="pcard__name">' + esc(p.nombre) + '</h3>' +
+        (p.nota ? '<p class="pcard__note">' + esc(p.nota) + '</p>' : '') +
         '<p class="pcard__price">' + precio(p.precio) + '</p>' +
         '<div class="qty" role="group" aria-label="Cantidad de ' + esc(p.nombre) + '">' +
           '<button type="button" class="qty__btn" data-menos="' + p.id + '" aria-label="Quitar uno"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>' +
