@@ -44,8 +44,10 @@
     { test: /supervac\s*vp\s*1\b/, src: 'img/supervac-vp1.webp' },
     { test: /supervac\s*vp\s*2\b/, src: 'img/supervac-vp2.webp' },
     { test: /manguera/, src: 'img/manguera.webp' },
-    { test: /aceite/, src: 'img/aceite.webp' },
-    // Las 4 bombas DVR usan la misma foto ("dvp" por si la 4A vuelve a escribirse con P).
+    // Bombas DVR: las aptas R32 tienen su propia foto (va primero); las demás usan la DVR común.
+    // ("dvp" por si la 4A vuelve a escribirse con P).
+    { test: /\b(dvr|dvp)\s*[1-4]a\b.*\br32\b/, src: 'img/bomba-dvr-r32.webp',
+      nota: 'Imagen ilustrativa de la línea DVR. Cambia la capacidad.' },
     { test: /\b(dvr|dvp)\s*[1-4]a\b/, src: 'img/bomba-vacio.webp',
       nota: 'Imagen ilustrativa de la línea DVR. Cambia la capacidad.' },
     { test: /vacuometro/, src: 'img/vacuometro.webp' }

@@ -71,21 +71,16 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
 1. ✅ **Nota en bombas DVR** (hecho): misma foto (`img/bomba-vacio.webp`) para DVR 1A, 2A, 3A y 4A, con la nota
    "Imagen ilustrativa de la línea DVR. Cambia la capacidad." En el Excel la 4A está mal escrita como "DVP 4A":
    el dueño la corrige a "DVR 4A" (la web acepta las dos).
-2. ✅ **Fotos del combo** (hecho, falta el OK del dueño): todos los productos del combo tienen foto. Fuente: Google
-   Drive, carpeta "Refri Mundo Productos". Originales en `material/`, optimizadas a 800×840 en `img/`.
-   - Elegidas por Claude (el dueño se lo delegó): VP1/VP2 = capturas limpias sobre fondo blanco; aluminio = `14.png`;
-     manifold sin app = `MOTOCOMPRESORES (54).png`; manguera = `8.png`; aceite = `Diseño_sin_título_(4).png`.
-   - **Lección Higgsfield**: `upscale_image` (bytedance 2K) **inventa letras** en textos chicos de etiquetas
-     (ej. "ACEITE" → "ACEIT2"). Solo se usó la mejorada del manifold digital sin app (no tiene texto chico).
-     VP1, VP2 y aceite van con la original. Siempre comparar con zoom antes de usar una foto mejorada.
-   - Pendiente opcional: una foto mejor del aceite (la botella original mide ~107×227 px y se ve algo suave),
-     y el producto es "x 2u" pero la foto muestra una botella.
-   - **Estilo de fotos** (pedido del dueño): todas como `img/bomba-vacio.webp`, `vacuometro.webp` y
-     `manifold-digital.webp` → producto sobre pared gris celeste clara con sombra suave, 900×945. Se hacen así:
-     `remove_background` de Higgsfield (1 crédito) solo como máscara + píxeles de la foto original encima, sobre un
-     fondo generado por código. Los kits (manifold de aluminio y digital sin app) imitan `manifold-digital.webp`:
-     valija abierta y valija/caja atrás, manifold adelante. Nada redibujado por IA.
-   - Claude **sí puede** ver las fotos: las baja de Drive (`uc?export=download&id=ID`) y las mira localmente.
+2. **Fotos del combo** (falta el OK del dueño): **las fotos las hace el dueño** y las sube a Drive, carpeta
+   "Refri Mundo Productos" → "fotos web". Claude solo las baja (`uc?export=download&id=ID`), las lleva a
+   **900×945** (forma de la tarjeta) y las pone en `img/`; originales en `material/`.
+   - Si la foto es más angosta que la tarjeta, se agrega pared a los costados estirando el borde de la misma foto
+     (el dueño lo aprobó); nunca se recorta el producto ni se lo retoca.
+   - Bombas DVR: las que dicen "R32" en el nombre → `img/bomba-dvr-r32.webp`; las demás → `img/bomba-vacio.webp`.
+     Ambas con la nota "Imagen ilustrativa de la línea DVR. Cambia la capacidad."
+   - Falta: foto del **aceite** (por ahora sale "Foto próximamente").
+   - **Higgsfield: no usarlo para nada sin el OK explícito del dueño.** Las pruebas anteriores (mejora 2K que
+     inventaba letras y fotos compuestas con fondo armado) salieron mal y se descartaron.
 3. **Publicar el combo** cuando el dueño dé el OK: botón "Armá tu combo" en la página principal, quitar el
    `noindex` de `combo.html`, agregarla a `sitemap.xml`, actualizar `data/productos.json` y pedir merge.
 4. Opcionales conversados: redirigir `refrimundo.ar`; contador de ventas de Mercado Libre vía API;
