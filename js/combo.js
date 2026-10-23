@@ -40,9 +40,9 @@
   var NOMBRES = [
     { test: /\b(?:dvr|dvp)\s*(\d)a\b/, nombre: 'Bomba de vacío DVR $1A' },
     { test: /supervac\s*vp\s*(\d)/, nombre: 'Bomba de vacío Supervac VP$1' },
-    { test: /manifold.*(bluetooth|pinza)/, nombre: 'Manifold digital con aplicación',
+    { test: /manifold.*(bluetooth|pinza)/, nombre: 'Manifold digital Dosivac con aplicación',
       detalle: 'Con pinzas de temperatura' },
-    { test: /manifold digital.*sin app/, nombre: 'Manifold digital' },
+    { test: /manifold digital.*sin app/, nombre: 'Manifold digital Dosivac' },
     { test: /manifold.*(aluminio|analogico)/, nombre: 'Manifold de aluminio analógico Dosivac' },
     { test: /vacuometro.*con app/, nombre: 'Vacuómetro digital con aplicación' },
     { test: /manguera/, nombre: 'Manguera de alto vacío Dosivac' },
@@ -95,7 +95,15 @@
   var pasos = [];          // categorías con productos + paso final
   var pasoActual = 0;
   var carrito = {};        // id -> cantidad
-  var datos = { pago: '', campos: {} };
+  var datos = { pago: '', campos: {}, facturaA: false, factura: {} };
+
+  // Los precios del Excel son sin IVA. Con Factura A se suma el IVA al total.
+  var IVA = 0.21;
+  var CAMPOS_FACTURA = [
+    { id: 'razon', label: 'Razón social', autocomplete: 'organization', full: true },
+    { id: 'cuit', label: 'CUIT', inputmode: 'numeric', placeholder: 'Ej: 30-12345678-9' },
+    { id: 'domicilio', label: 'Domicilio fiscal', autocomplete: 'street-address', full: true }
+  ];
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -155,7 +163,10 @@
   function recuperar() {
     try {
       var g = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (g) { carrito = g.carrito || {}; datos = g.datos || datos; datos.campos = datos.campos || {}; }
+      if (g) {
+        carrito = g.carrito || {}; datos = g.datos || datos;
+        datos.campos = datos.campos || {}; datos.factura = datos.factura || {}; datos.facturaA = !!datos.facturaA;
+      }
     } catch (e) {}
   }
 
@@ -215,6 +226,12 @@
   }
   function total() {
     return lineas().reduce(function (s, l) { return s + l.subtotal; }, 0);
+  }
+  function iva() {
+    return datos.facturaA ? Math.round(total() * IVA) : 0;
+  }
+  function totalFinal() {
+    return total() + iva();
   }
   function cantidadTotal() {
     return lineas().reduce(function (s, l) { return s + l.cant; }, 0);
@@ -283,7 +300,8 @@
       var lista = productos.filter(function (p) { return p.cat === paso.id; });
       html = '<div class="step-head"><p class="step-head__num">Paso ' + (pasoActual + 1) + ' de ' + pasos.length + '</p>' +
         '<h2>' + esc(paso.nombre) + '</h2>' +
-        '<p class="step-head__hint">Sumá los que quieras con el botón +, o pasá a la siguiente categoría.</p></div>' +
+        '<p class="step-head__hint">Sumá los que quieras con el botón +, o pasá a la siguiente categoría. ' +
+        '<strong class="iva-tag">Precios sin IVA.</strong></p></div>' +
         '<div class="pgrid">' + lista.map(tarjeta).join('') + '</div>' + navegacion();
     }
     $('comboMain').innerHTML = html;
@@ -302,13 +320,33 @@
             '<span class="qty__val" data-qty="' + l.p.id + '">' + l.cant + '</span>' +
             '<button type="button" class="qty__btn qty__btn--add" data-mas="' + l.p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button></div>' +
             '<strong class="review__sub">' + precio(l.subtotal) + '</strong></li>';
-        }).join('') + '</ul><div class="review__total"><span>Total</span><strong>' + precio(total()) + '</strong></div>'
+        }).join('') + '</ul>' +
+        (datos.facturaA
+          ? '<div class="review__line"><span>Subtotal sin IVA</span><span>' + precio(total()) + '</span></div>' +
+            '<div class="review__line"><span>IVA 21%</span><span>' + precio(iva()) + '</span></div>' +
+            '<div class="review__total"><span>Total con IVA</span><strong>' + precio(totalFinal()) + '</strong></div>'
+          : '<div class="review__total"><span>Total</span><strong>' + precio(total()) + '</strong></div>' +
+            '<p class="review__iva">Los precios no incluyen IVA. Si necesitás Factura A, marcalo más abajo y te sumamos el IVA.</p>')
       : '<div class="review-empty"><p>Todavía no sumaste productos a tu combo.</p><button type="button" class="btn btn--primary" data-ir="0">Empezar a elegir</button></div>';
 
     var pagos = PAGOS.map(function (p) {
       return '<label class="pay"><input type="radio" name="pago" value="' + esc(p) + '" required' +
         (datos.pago === p ? ' checked' : '') + '><span>' + esc(p) + '</span></label>';
     }).join('');
+
+    var factura = '<label class="factura-toggle"><input type="checkbox" id="facturaA"' + (datos.facturaA ? ' checked' : '') + '>' +
+      '<span><strong>Quiero Factura A</strong><small>Se suma el 21% de IVA al total</small></span></label>' +
+      (datos.facturaA
+        ? '<div class="fields factura-fields">' + CAMPOS_FACTURA.map(function (c) {
+            return '<div class="field' + (c.full ? ' field--full' : '') + '"><label for="fa-' + c.id + '">' + esc(c.label) + '</label>' +
+              '<input id="fa-' + c.id + '" name="' + c.id + '" data-factura="1" type="text" required' +
+              (c.autocomplete ? ' autocomplete="' + c.autocomplete + '"' : '') +
+              (c.inputmode ? ' inputmode="' + c.inputmode + '"' : '') +
+              (c.placeholder ? ' placeholder="' + esc(c.placeholder) + '"' : '') +
+              ' value="' + esc(datos.factura[c.id] || '') + '"></div>';
+          }).join('') + '</div>' +
+          '<p class="form-note">La Factura A es para Responsables Inscriptos en IVA.</p>'
+        : '');
 
     var campos = CAMPOS.map(function (c) {
       var valor = esc(datos.campos[c.id] || '');
@@ -332,7 +370,8 @@
       '<div class="final-block"><h3>1. Tu combo</h3>' + resumen + '</div>' +
       (ls.length ? '<form class="final-form" id="finalForm" novalidate>' +
         '<div class="final-block"><h3>2. Forma de pago</h3><div class="pays">' + pagos + '</div></div>' +
-        '<div class="final-block"><h3>3. Datos de envío</h3><div class="fields">' + campos + '</div>' +
+        '<div class="final-block"><h3>3. Facturación</h3>' + factura + '</div>' +
+        '<div class="final-block"><h3>4. Datos de envío</h3><div class="fields">' + campos + '</div>' +
         '<p class="form-note">El costo del envío y la disponibilidad te los confirmamos por WhatsApp.</p></div>' +
         '<p class="form-error" id="formError" role="alert" hidden></p>' +
         '<button type="submit" class="btn btn--wa btn--lg final-submit"><svg class="icon" aria-hidden="true"><use href="#i-wa"/></svg> Comprar por WhatsApp</button>' +
@@ -349,10 +388,11 @@
         '<button type="button" class="cart__remove" data-quitar="' + l.p.id + '" aria-label="Quitar ' + esc(l.p.nombre) + '"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></li>';
     }).join('');
     $('cartEmpty').hidden = ls.length > 0;
-    $('cartTotal').textContent = precio(total());
+    $('cartTotal').textContent = precio(totalFinal());
+    $('cartTotalLabel').textContent = datos.facturaA ? 'Total con IVA' : 'Total sin IVA';
     var n = cantidadTotal();
-    $('cartBarCount').textContent = n + (n === 1 ? ' producto' : ' productos');
-    $('cartBarTotal').textContent = precio(total());
+    $('cartBarCount').textContent = n + (n === 1 ? ' producto' : ' productos') + (datos.facturaA ? ' · con IVA' : ' · sin IVA');
+    $('cartBarTotal').textContent = precio(totalFinal());
     document.body.classList.toggle('has-items', n > 0);
   }
 
@@ -372,13 +412,24 @@
     var form = $('finalForm');
     if (!form) return;
     form.addEventListener('input', function (e) {
+      if (e.target.id === 'facturaA') return;
       if (e.target.name === 'pago') datos.pago = e.target.value;
+      else if (e.target.dataset.factura) datos.factura[e.target.name] = e.target.value;
       else if (e.target.name) datos.campos[e.target.name] = e.target.value;
       e.target.classList.remove('is-invalid');
       $('formError').hidden = true;
       guardar();
     });
     form.addEventListener('change', function (e) {
+      if (e.target.id === 'facturaA') {
+        datos.facturaA = e.target.checked;
+        guardar();
+        renderPaso(); // muestra u oculta los datos de factura y recalcula el total
+        renderCarrito();
+        var foco = datos.facturaA ? $('fa-razon') : $('facturaA');
+        if (foco) foco.focus();
+        return;
+      }
       if (e.target.name === 'pago') { datos.pago = e.target.value; guardar(); }
       if (e.target.tagName === 'SELECT') { datos.campos[e.target.name] = e.target.value; e.target.classList.remove('is-invalid'); guardar(); }
     });
@@ -393,6 +444,15 @@
         el.classList.toggle('is-invalid', mal);
         if (mal) faltan.push(c.label.toLowerCase());
       });
+      if (datos.facturaA) {
+        CAMPOS_FACTURA.forEach(function (c) {
+          var el = $('fa-' + c.id);
+          var v = (el.value || '').trim();
+          var mal = !v || (c.id === 'cuit' && v.replace(/\D/g, '').length !== 11);
+          el.classList.toggle('is-invalid', mal);
+          if (mal) faltan.push(c.id === 'cuit' ? 'CUIT (11 números)' : c.label.toLowerCase());
+        });
+      }
       var err = $('formError');
       if (faltan.length) {
         err.textContent = 'Revisá estos datos: ' + faltan.join(', ') + '.';
@@ -416,8 +476,21 @@
         (l.cant > 1 ? ' c/u = ' + precio(l.subtotal) : ''));
     });
     t.push('');
-    t.push('*Total: ' + precio(total()) + '*');
+    if (datos.facturaA) {
+      t.push('Subtotal sin IVA: ' + precio(total()));
+      t.push('IVA 21%: ' + precio(iva()));
+      t.push('*Total con IVA: ' + precio(totalFinal()) + '*');
+    } else {
+      t.push('*Total: ' + precio(total()) + '* (precios sin IVA)');
+    }
     t.push('*Forma de pago:* ' + datos.pago);
+    if (datos.facturaA) {
+      t.push('');
+      t.push('*Factura A*');
+      CAMPOS_FACTURA.forEach(function (campo) {
+        t.push(campo.label + ': ' + (datos.factura[campo.id] || '').trim());
+      });
+    }
     t.push('');
     t.push('*Datos de envío*');
     CAMPOS.forEach(function (campo) {
@@ -431,7 +504,7 @@
   function enviar() {
     var url = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(mensaje());
     if (typeof window.gtag === 'function') {
-      window.gtag('event', 'pedido_combo', { value: total(), currency: 'ARS', items: cantidadTotal() });
+      window.gtag('event', 'pedido_combo', { value: totalFinal(), currency: 'ARS', items: cantidadTotal(), factura_a: datos.facturaA });
     }
     var w = window.open(url, '_blank', 'noopener');
     if (!w) window.location.href = url;

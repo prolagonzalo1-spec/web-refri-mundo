@@ -276,6 +276,36 @@ body:not(.has-items) .cart__cta { opacity: .55; }
   font-weight: 600;
 }
 .review__total strong { font: 800 1.5rem var(--font-head); color: var(--navy); }
+.review__line {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  color: var(--muted);
+  font-size: .95rem;
+}
+.review__line + .review__total { margin-top: 4px; border-top: 1px solid var(--line); }
+.review__iva { margin: 8px 0 0; font-size: .85rem; color: var(--muted); text-align: right; }
+.iva-tag { color: var(--navy); font-weight: 600; }
+
+/* Factura A */
+.factura-toggle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color .2s, background-color .2s;
+}
+.factura-toggle:hover { border-color: var(--ice-200); }
+.factura-toggle input { width: 22px; height: 22px; accent-color: var(--royal); flex: none; cursor: pointer; }
+.factura-toggle span { display: flex; flex-direction: column; gap: 2px; }
+.factura-toggle strong { color: var(--navy); font-size: 1rem; }
+.factura-toggle small { color: var(--muted); font-size: .85rem; }
+.factura-toggle:has(input:checked) { border-color: var(--royal); background: var(--ice); }
+.factura-fields { margin-top: 16px; }
+
 .review-empty { text-align: center; padding: 12px 0; color: var(--muted); }
 
 .pays { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }

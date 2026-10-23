@@ -60,6 +60,9 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
 - La categoría se deduce del **nombre** del producto (reglas en `REGLAS_CATEGORIA`). Se excluyen las
   recuperadoras de gas y los combos armados (nombres con "+"). Fotos por palabras del nombre en `FOTOS`
   (sin foto → ícono "Foto próximamente").
+- **IVA y Factura A**: los precios del Excel son **sin IVA** (se avisa en las categorías, el carrito y el resumen).
+  En el último paso hay un botón "Quiero Factura A": pide razón social, CUIT (11 números) y domicilio fiscal, y suma
+  el 21% de IVA al total (también en el mensaje de WhatsApp).
 - **Precios en vivo**: la web es un espejo de lo que se vende por WhatsApp. `PRECIOS_URL` apunta al Worker
   https://refrimundo-precios.prolagonzalo1.workers.dev/ — si falla, usa `data/productos.json`.
   Los precios se muestran redondeados a entero (como los muestra el Excel), **sin otro redondeo**.
