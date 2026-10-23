@@ -39,7 +39,13 @@
   // "nota" es un texto opcional que se muestra debajo del nombre.
   var FOTOS = [
     { test: /manifold.*(bluetooth|pinza)/, src: 'img/manifold-digital.webp' },
-    // Las 4 bombas DVR usan la misma foto (en el Excel la 4A figura como "DVP 4A").
+    { test: /manifold digital.*sin app/, src: 'img/manifold-digital-sin-app.webp' },
+    { test: /manifold.*(aluminio|analogico)/, src: 'img/manifold-aluminio.webp' },
+    { test: /supervac\s*vp\s*1\b/, src: 'img/supervac-vp1.webp' },
+    { test: /supervac\s*vp\s*2\b/, src: 'img/supervac-vp2.webp' },
+    { test: /manguera/, src: 'img/manguera.webp' },
+    { test: /aceite/, src: 'img/aceite.webp' },
+    // Las 4 bombas DVR usan la misma foto ("dvp" por si la 4A vuelve a escribirse con P).
     { test: /\b(dvr|dvp)\s*[1-4]a\b/, src: 'img/bomba-vacio.webp',
       nota: 'Imagen ilustrativa de la línea DVR. Cambia la capacidad.' },
     { test: /vacuometro/, src: 'img/vacuometro.webp' }

@@ -68,23 +68,19 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
   Para actualizar el código, el dueño lo pega en Cloudflare (Workers → refrimundo-precios → Edit code → Deploy).
 
 ## Pendientes (en orden)
-1. **Nota en bombas DVR**: usar la misma foto (`img/bomba-vacio.webp`, dice "DVR II") para DVR 1A, 2A, 3A y 4A,
-   con la nota "Imagen ilustrativa de la línea DVR. Cambia la capacidad." (el dueño ya lo aprobó).
-2. **Fotos del combo**: las fotos están en Google Drive, carpeta "Refri Mundo" → "Refri Mundo Productos"
-   (compartida con link). Carpeta → producto:
-   - Supervac VP1 → `VP1` · Supervac VP2 → `VP2`
-   - Manifold analógico de aluminio → `manifold de aluminio nuevo`
-   - Manifold digital Bluetooth y pinzas → `Manifold digital completo` (ya en la web: `img/manifold-digital.webp`)
-   - Manifold digital sin app → `Manifold Digital`
-   - Vacuómetro digital con app → `vacuometro digital dosivac` (ya en la web: `img/vacuometro.webp`).
-     La carpeta `Vacuometro digital` es un modelo gris que ya no se vende.
-   - Manguera de alto vacío → `Manguera de alto vacio` · Aceite Dosivac → `Aceite dosivac`
-   Proceso acordado: el dueño elige el archivo de cada carpeta → Claude lo importa a **Higgsfield** con
-   `media_import_url` usando `https://drive.google.com/uc?export=download&id=ID` (funciona) → mejora de
-   resolución 2K (`upscale_image`, **2 créditos por foto**; saldo aprox. 61 créditos). Solo mejorar calidad o
-   limpiar fondo: **no** usar edición generativa que cambie el producto. Claude no puede ver las imágenes de
-   Drive ni de Higgsfield: el dueño revisa los resultados, los descarga y los sube a `material/`. Después Claude
-   los optimiza a `img/` y completa `FOTOS` en `js/combo.js`.
+1. ✅ **Nota en bombas DVR** (hecho): misma foto (`img/bomba-vacio.webp`) para DVR 1A, 2A, 3A y 4A, con la nota
+   "Imagen ilustrativa de la línea DVR. Cambia la capacidad." En el Excel la 4A está mal escrita como "DVP 4A":
+   el dueño la corrige a "DVR 4A" (la web acepta las dos).
+2. ✅ **Fotos del combo** (hecho, falta el OK del dueño): todos los productos del combo tienen foto. Fuente: Google
+   Drive, carpeta "Refri Mundo Productos". Originales en `material/`, optimizadas a 800×840 en `img/`.
+   - Elegidas por Claude (el dueño se lo delegó): VP1/VP2 = capturas limpias sobre fondo blanco; aluminio = `14.png`;
+     manifold sin app = `MOTOCOMPRESORES (54).png`; manguera = `8.png`; aceite = `Diseño_sin_título_(4).png`.
+   - **Lección Higgsfield**: `upscale_image` (bytedance 2K) **inventa letras** en textos chicos de etiquetas
+     (ej. "ACEITE" → "ACEIT2"). Solo se usó la mejorada del manifold digital sin app (no tiene texto chico).
+     VP1, VP2 y aceite van con la original. Siempre comparar con zoom antes de usar una foto mejorada.
+   - Pendiente opcional: una foto mejor del aceite (la botella original mide ~107×227 px y se ve algo suave),
+     y el producto es "x 2u" pero la foto muestra una botella.
+   - Claude **sí puede** ver las fotos: las baja de Drive (`uc?export=download&id=ID`) y las mira localmente.
 3. **Publicar el combo** cuando el dueño dé el OK: botón "Armá tu combo" en la página principal, quitar el
    `noindex` de `combo.html`, agregarla a `sitemap.xml`, actualizar `data/productos.json` y pedir merge.
 4. Opcionales conversados: redirigir `refrimundo.ar`; contador de ventas de Mercado Libre vía API;
