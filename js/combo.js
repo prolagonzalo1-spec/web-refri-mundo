@@ -18,7 +18,6 @@
     { id: 'manifolds', nombre: 'Manifolds' },
     { id: 'vacuometros', nombre: 'Vacuómetros' },
     { id: 'mangueras', nombre: 'Mangueras' },
-    { id: 'recuperadoras', nombre: 'Recuperadoras de gas' },
     { id: 'aceites', nombre: 'Aceites' },
     { id: 'otros', nombre: 'Otros productos' }
   ];
@@ -28,11 +27,13 @@
   var REGLAS_CATEGORIA = [
     { test: /manifold/, cat: 'manifolds' },
     { test: /vacuometro/, cat: 'vacuometros' },
-    { test: /recuperadora/, cat: 'recuperadoras' },
     { test: /aceite/, cat: 'aceites' },
     { test: /manguera/, cat: 'mangueras' },
     { test: /\b(bomba|supervac|dvr|dvp)\b/, cat: 'bombas' }
   ];
+
+  // Productos que no se ofrecen en el armado de combos.
+  var EXCLUIR = [/recuperadora/];
 
   // Fotos de cada producto (se buscan por palabras del nombre).
   var FOTOS = [
@@ -124,7 +125,8 @@
       productos = (json.productos || [])
         .filter(function (p) {
           return p && p.nombre && p.disponible !== false && Number(p.precio) > 0 &&
-            p.nombre.indexOf('+') === -1; // los combos armados no van: cada cliente arma el suyo
+            p.nombre.indexOf('+') === -1 && // los combos armados no van: cada cliente arma el suyo
+            !EXCLUIR.some(function (re) { return re.test(normalizar(p.nombre)); });
         })
         .map(function (p) {
           return {
