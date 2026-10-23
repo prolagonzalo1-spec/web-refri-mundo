@@ -354,6 +354,8 @@ body:not(.has-items) .cart__cta { opacity: .55; }
 
 /* Facturación: sin factura / Factura A / Factura B */
 .final-block h3 .opt { font: 500 .85rem var(--font-body); color: var(--muted); }
+.pays.pays--factura { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.factura-ayuda { margin: -8px 0 12px; }
 .pays--factura .pay span { flex-direction: column; gap: 3px; }
 .pays--factura .pay small { font-weight: 500; font-size: .76rem; color: var(--muted); line-height: 1.3; }
 .factura-fields { margin-top: 16px; }

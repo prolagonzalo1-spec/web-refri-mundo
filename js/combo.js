@@ -100,7 +100,6 @@
   // Los precios del Excel son sin IVA. Si el cliente pide factura (A o B) se suma el IVA al total.
   var IVA = 0.21;
   var TIPOS_FACTURA = [
-    { id: '', nombre: 'Sin factura', detalle: 'Precios sin IVA' },
     { id: 'A', nombre: 'Factura A', detalle: 'Responsables Inscriptos · +21% IVA' },
     { id: 'B', nombre: 'Factura B', detalle: 'Consumidor final o monotributo · +21% IVA' }
   ];
@@ -369,8 +368,9 @@
     }).join('');
 
     var tipo = datos.tipoFactura;
-    var factura = '<div class="pays pays--factura">' + TIPOS_FACTURA.map(function (f) {
-        return '<label class="pay"><input type="radio" name="tipoFactura" id="tf-' + (f.id || 'no') + '" value="' + f.id + '"' +
+    var factura = '<p class="form-note factura-ayuda">Si no necesitás factura, dejalo sin marcar.</p>' +
+      '<div class="pays pays--factura">' + TIPOS_FACTURA.map(function (f) {
+        return '<label class="pay"><input type="radio" name="tipoFactura" id="tf-' + f.id + '" value="' + f.id + '"' +
           (tipo === f.id ? ' checked' : '') + '><span><strong>' + esc(f.nombre) + '</strong><small>' + esc(f.detalle) + '</small></span></label>';
       }).join('') + '</div>' +
       (tipo
@@ -479,13 +479,24 @@
       $('formError').hidden = true;
       guardar();
     });
+    form.addEventListener('click', function (e) {
+      if (e.target.name === 'tipoFactura' && e.target.value === datos.tipoFactura) {
+        e.target.checked = false;
+        datos.tipoFactura = '';
+        guardar();
+        renderPaso();
+        renderCarrito();
+        var foco = $('tf-' + e.target.value);
+        if (foco) foco.focus();
+      }
+    });
     form.addEventListener('change', function (e) {
       if (e.target.name === 'tipoFactura') {
         datos.tipoFactura = e.target.value;
         guardar();
         renderPaso(); // muestra los datos de la factura elegida y recalcula el total
         renderCarrito();
-        var foco = datos.tipoFactura ? $('fa-razon') : $('tf-no');
+        var foco = datos.tipoFactura ? $('fa-razon') : $('tf-' + e.target.value);
         if (foco) foco.focus();
         return;
       }

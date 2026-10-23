@@ -61,7 +61,7 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
   recuperadoras de gas y los combos armados (nombres con "+"). Fotos por palabras del nombre en `FOTOS`
   (sin foto → ícono "Foto próximamente").
 - **IVA y facturación**: los precios del Excel son **sin IVA** (se avisa en las categorías, el carrito y el resumen).
-  En el último paso, "Facturación (opcional)": Sin factura / Factura A (razón social, CUIT de 11 números, domicilio
+  En el último paso, "Facturación (opcional)": se puede dejar sin marcar (o desmarcar tocando de nuevo), Factura A (razón social, CUIT de 11 números, domicilio
   fiscal) / Factura B (nombre o razón social, DNI o CUIT, condición frente al IVA, domicilio). Con A o B se suma el
   21% de IVA. Antes del botón de WhatsApp hay un "Resumen de tu compra": productos, IVA (si hay factura), envío
   gratis y total. **Envío gratis a todo el país.**
