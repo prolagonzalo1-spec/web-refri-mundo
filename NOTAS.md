@@ -80,6 +80,11 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
      VP1, VP2 y aceite van con la original. Siempre comparar con zoom antes de usar una foto mejorada.
    - Pendiente opcional: una foto mejor del aceite (la botella original mide ~107×227 px y se ve algo suave),
      y el producto es "x 2u" pero la foto muestra una botella.
+   - **Estilo de fotos** (pedido del dueño): todas como `img/bomba-vacio.webp`, `vacuometro.webp` y
+     `manifold-digital.webp` → producto sobre pared gris celeste clara con sombra suave, 900×945. Se hacen así:
+     `remove_background` de Higgsfield (1 crédito) solo como máscara + píxeles de la foto original encima, sobre un
+     fondo generado por código. Los kits (manifold de aluminio y digital sin app) imitan `manifold-digital.webp`:
+     valija abierta y valija/caja atrás, manifold adelante. Nada redibujado por IA.
    - Claude **sí puede** ver las fotos: las baja de Drive (`uc?export=download&id=ID`) y las mira localmente.
 3. **Publicar el combo** cuando el dueño dé el OK: botón "Armá tu combo" en la página principal, quitar el
    `noindex` de `combo.html`, agregarla a `sitemap.xml`, actualizar `data/productos.json` y pedir merge.
