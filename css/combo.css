@@ -352,24 +352,18 @@ body:not(.has-items) .cart__cta { opacity: .55; }
 .review__iva { margin: 8px 0 0; font-size: .85rem; color: var(--muted); text-align: right; }
 .iva-tag { color: var(--navy); font-weight: 600; }
 
-/* Factura A */
-.factura-toggle {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: border-color .2s, background-color .2s;
-}
-.factura-toggle:hover { border-color: var(--ice-200); }
-.factura-toggle input { width: 22px; height: 22px; accent-color: var(--royal); flex: none; cursor: pointer; }
-.factura-toggle span { display: flex; flex-direction: column; gap: 2px; }
-.factura-toggle strong { color: var(--navy); font-size: 1rem; }
-.factura-toggle small { color: var(--muted); font-size: .85rem; }
-.factura-toggle:has(input:checked) { border-color: var(--royal); background: var(--ice); }
+/* Facturación: sin factura / Factura A / Factura B */
+.final-block h3 .opt { font: 500 .85rem var(--font-body); color: var(--muted); }
+.pays--factura .pay span { flex-direction: column; gap: 3px; }
+.pays--factura .pay small { font-weight: 500; font-size: .76rem; color: var(--muted); line-height: 1.3; }
 .factura-fields { margin-top: 16px; }
+
+/* Resumen de la compra antes del botón de WhatsApp */
+.resumen-final { border: 2px solid var(--ice-200); }
+.resumen-final h3 { margin-bottom: 4px; }
+.resumen-final__grupo .review__line:first-child { padding-top: 6px; }
+.resumen-final .review__total { margin-top: 12px; border-top: 1px solid var(--line); }
+.gratis { color: var(--wa-600); font-weight: 700; }
 
 .review-empty { text-align: center; padding: 12px 0; color: var(--muted); }
 

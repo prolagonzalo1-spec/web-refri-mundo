@@ -95,15 +95,29 @@
   var pasos = [];          // categorías con productos + paso final
   var pasoActual = 0;
   var carrito = {};        // id -> cantidad
-  var datos = { pago: '', campos: {}, facturaA: false, factura: {} };
+  var datos = { pago: '', campos: {}, tipoFactura: '', factura: {} };
 
-  // Los precios del Excel son sin IVA. Con Factura A se suma el IVA al total.
+  // Los precios del Excel son sin IVA. Si el cliente pide factura (A o B) se suma el IVA al total.
   var IVA = 0.21;
-  var CAMPOS_FACTURA = [
-    { id: 'razon', label: 'Razón social', autocomplete: 'organization', full: true },
-    { id: 'cuit', label: 'CUIT', inputmode: 'numeric', placeholder: 'Ej: 30-12345678-9' },
-    { id: 'domicilio', label: 'Domicilio fiscal', autocomplete: 'street-address', full: true }
+  var TIPOS_FACTURA = [
+    { id: '', nombre: 'Sin factura', detalle: 'Precios sin IVA' },
+    { id: 'A', nombre: 'Factura A', detalle: 'Responsables Inscriptos · +21% IVA' },
+    { id: 'B', nombre: 'Factura B', detalle: 'Consumidor final o monotributo · +21% IVA' }
   ];
+  var CAMPOS_FACTURA = {
+    A: [
+      { id: 'razon', label: 'Razón social', autocomplete: 'organization', full: true },
+      { id: 'cuit', label: 'CUIT', inputmode: 'numeric', placeholder: 'Ej: 30-12345678-9', digitos: [11] },
+      { id: 'domicilio', label: 'Domicilio fiscal', autocomplete: 'street-address', full: true }
+    ],
+    B: [
+      { id: 'razon', label: 'Nombre o razón social', autocomplete: 'name', full: true },
+      { id: 'doc', label: 'DNI o CUIT', inputmode: 'numeric', placeholder: 'Sin puntos ni guiones', digitos: [7, 8, 11] },
+      { id: 'condicion', label: 'Condición frente al IVA', tipo: 'select',
+        opciones: ['Consumidor final', 'Monotributista', 'Exento'] },
+      { id: 'domicilio', label: 'Domicilio', autocomplete: 'street-address', full: true }
+    ]
+  };
 
   var $ = function (id) { return document.getElementById(id); };
 
@@ -165,7 +179,10 @@
       var g = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       if (g) {
         carrito = g.carrito || {}; datos = g.datos || datos;
-        datos.campos = datos.campos || {}; datos.factura = datos.factura || {}; datos.facturaA = !!datos.facturaA;
+        datos.campos = datos.campos || {}; datos.factura = datos.factura || {};
+        if (datos.facturaA) datos.tipoFactura = 'A'; // pedidos guardados con la versión anterior
+        delete datos.facturaA;
+        if (!CAMPOS_FACTURA[datos.tipoFactura]) datos.tipoFactura = '';
       }
     } catch (e) {}
   }
@@ -228,7 +245,7 @@
     return lineas().reduce(function (s, l) { return s + l.subtotal; }, 0);
   }
   function iva() {
-    return datos.facturaA ? Math.round(total() * IVA) : 0;
+    return datos.tipoFactura ? Math.round(total() * IVA) : 0;
   }
   function totalFinal() {
     return total() + iva();
@@ -342,12 +359,8 @@
             '<button type="button" class="qty__btn qty__btn--add" data-mas="' + l.p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button></div>' +
             '<strong class="review__sub">' + precio(l.subtotal) + '</strong></li>';
         }).join('') + '</ul>' +
-        (datos.facturaA
-          ? '<div class="review__line"><span>Subtotal sin IVA</span><span>' + precio(total()) + '</span></div>' +
-            '<div class="review__line"><span>IVA 21%</span><span>' + precio(iva()) + '</span></div>' +
-            '<div class="review__total"><span>Total con IVA</span><strong>' + precio(totalFinal()) + '</strong></div>'
-          : '<div class="review__total"><span>Total</span><strong>' + precio(total()) + '</strong></div>' +
-            '<p class="review__iva">Los precios no incluyen IVA. Si necesitás Factura A, marcalo más abajo y te sumamos el IVA.</p>')
+        '<div class="review__total"><span>Productos</span><strong>' + precio(total()) + '</strong></div>' +
+        '<p class="review__iva">Precios sin IVA. Si necesitás factura (A o B), elegila más abajo y te sumamos el IVA.</p>'
       : '<div class="review-empty"><p>Todavía no sumaste productos a tu combo.</p><button type="button" class="btn btn--primary" data-ir="0">Empezar a elegir</button></div>';
 
     var pagos = PAGOS.map(function (p) {
@@ -355,19 +368,36 @@
         (datos.pago === p ? ' checked' : '') + '><span>' + esc(p) + '</span></label>';
     }).join('');
 
-    var factura = '<label class="factura-toggle"><input type="checkbox" id="facturaA"' + (datos.facturaA ? ' checked' : '') + '>' +
-      '<span><strong>Quiero Factura A</strong><small>Se suma el 21% de IVA al total</small></span></label>' +
-      (datos.facturaA
-        ? '<div class="fields factura-fields">' + CAMPOS_FACTURA.map(function (c) {
-            return '<div class="field' + (c.full ? ' field--full' : '') + '"><label for="fa-' + c.id + '">' + esc(c.label) + '</label>' +
-              '<input id="fa-' + c.id + '" name="' + c.id + '" data-factura="1" type="text" required' +
-              (c.autocomplete ? ' autocomplete="' + c.autocomplete + '"' : '') +
-              (c.inputmode ? ' inputmode="' + c.inputmode + '"' : '') +
-              (c.placeholder ? ' placeholder="' + esc(c.placeholder) + '"' : '') +
-              ' value="' + esc(datos.factura[c.id] || '') + '"></div>';
-          }).join('') + '</div>' +
-          '<p class="form-note">La Factura A es para Responsables Inscriptos en IVA.</p>'
+    var tipo = datos.tipoFactura;
+    var factura = '<div class="pays pays--factura">' + TIPOS_FACTURA.map(function (f) {
+        return '<label class="pay"><input type="radio" name="tipoFactura" id="tf-' + (f.id || 'no') + '" value="' + f.id + '"' +
+          (tipo === f.id ? ' checked' : '') + '><span><strong>' + esc(f.nombre) + '</strong><small>' + esc(f.detalle) + '</small></span></label>';
+      }).join('') + '</div>' +
+      (tipo
+        ? '<div class="fields factura-fields">' + CAMPOS_FACTURA[tipo].map(function (c) {
+            var control = c.tipo === 'select'
+              ? '<select id="fa-' + c.id + '" name="' + c.id + '" data-factura="1" required><option value="">Elegí una opción</option>' +
+                c.opciones.map(function (o) { return '<option' + (datos.factura[c.id] === o ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') +
+                '</select>'
+              : '<input id="fa-' + c.id + '" name="' + c.id + '" data-factura="1" type="text" required' +
+                (c.autocomplete ? ' autocomplete="' + c.autocomplete + '"' : '') +
+                (c.inputmode ? ' inputmode="' + c.inputmode + '"' : '') +
+                (c.placeholder ? ' placeholder="' + esc(c.placeholder) + '"' : '') +
+                ' value="' + esc(datos.factura[c.id] || '') + '">';
+            return '<div class="field' + (c.full ? ' field--full' : '') + '"><label for="fa-' + c.id + '">' + esc(c.label) + '</label>' + control + '</div>';
+          }).join('') + '</div>'
         : '');
+
+    // Resumen de la compra justo antes del botón de WhatsApp
+    var resumenFinal = '<div class="final-block resumen-final"><h3>Resumen de tu compra</h3>' +
+      '<div class="resumen-final__grupo">' +
+        '<div class="review__line"><span>Productos</span><span>' + precio(total()) + '</span></div>' +
+        (tipo ? '<div class="review__line"><span>IVA 21% (Factura ' + tipo + ')</span><span>' + precio(iva()) + '</span></div>' : '') +
+        '<div class="review__line"><span>Envío a todo el país</span><span class="gratis">Gratis</span></div>' +
+      '</div>' +
+      '<div class="review__total"><span>' + (tipo ? 'Total con IVA' : 'Total') + '</span><strong>' + precio(totalFinal()) + '</strong></div>' +
+      (tipo ? '' : '<p class="review__iva">Precios sin IVA.</p>') +
+      '</div>';
 
     var campos = CAMPOS.map(function (c) {
       var valor = esc(datos.campos[c.id] || '');
@@ -391,9 +421,10 @@
       '<div class="final-block"><h3>1. Tu combo</h3>' + resumen + '</div>' +
       (ls.length ? '<form class="final-form" id="finalForm" novalidate>' +
         '<div class="final-block"><h3>2. Forma de pago</h3><div class="pays">' + pagos + '</div></div>' +
-        '<div class="final-block"><h3>3. Facturación</h3>' + factura + '</div>' +
+        '<div class="final-block"><h3>3. Facturación <span class="opt">(opcional)</span></h3>' + factura + '</div>' +
         '<div class="final-block"><h3>4. Datos de envío</h3><div class="fields">' + campos + '</div>' +
-        '<p class="form-note">El costo del envío y la disponibilidad te los confirmamos por WhatsApp.</p></div>' +
+        '<p class="form-note">El envío es gratis a todo el país. La disponibilidad te la confirmamos por WhatsApp.</p></div>' +
+        resumenFinal +
         '<p class="form-error" id="formError" role="alert" hidden></p>' +
         '<button type="submit" class="btn btn--wa btn--lg final-submit"><svg class="icon" aria-hidden="true"><use href="#i-wa"/></svg> Comprar por WhatsApp</button>' +
         '</form>' : '') +
@@ -410,9 +441,9 @@
     }).join('');
     $('cartEmpty').hidden = ls.length > 0;
     $('cartTotal').textContent = precio(totalFinal());
-    $('cartTotalLabel').textContent = datos.facturaA ? 'Total con IVA' : 'Total sin IVA';
+    $('cartTotalLabel').textContent = datos.tipoFactura ? 'Total con IVA' : 'Total sin IVA';
     var n = cantidadTotal();
-    $('cartBarCount').textContent = n + (n === 1 ? ' producto' : ' productos') + (datos.facturaA ? ' · con IVA' : ' · sin IVA');
+    $('cartBarCount').textContent = n + (n === 1 ? ' producto' : ' productos') + (datos.tipoFactura ? ' · con IVA' : ' · sin IVA');
     $('cartBarTotal').textContent = precio(totalFinal());
     document.body.classList.toggle('has-items', n > 0);
   }
@@ -440,7 +471,7 @@
     var form = $('finalForm');
     if (!form) return;
     form.addEventListener('input', function (e) {
-      if (e.target.id === 'facturaA') return;
+      if (e.target.name === 'tipoFactura') return;
       if (e.target.name === 'pago') datos.pago = e.target.value;
       else if (e.target.dataset.factura) datos.factura[e.target.name] = e.target.value;
       else if (e.target.name) datos.campos[e.target.name] = e.target.value;
@@ -449,17 +480,22 @@
       guardar();
     });
     form.addEventListener('change', function (e) {
-      if (e.target.id === 'facturaA') {
-        datos.facturaA = e.target.checked;
+      if (e.target.name === 'tipoFactura') {
+        datos.tipoFactura = e.target.value;
         guardar();
-        renderPaso(); // muestra u oculta los datos de factura y recalcula el total
+        renderPaso(); // muestra los datos de la factura elegida y recalcula el total
         renderCarrito();
-        var foco = datos.facturaA ? $('fa-razon') : $('facturaA');
+        var foco = datos.tipoFactura ? $('fa-razon') : $('tf-no');
         if (foco) foco.focus();
         return;
       }
       if (e.target.name === 'pago') { datos.pago = e.target.value; guardar(); }
-      if (e.target.tagName === 'SELECT') { datos.campos[e.target.name] = e.target.value; e.target.classList.remove('is-invalid'); guardar(); }
+      if (e.target.tagName === 'SELECT') {
+        if (e.target.dataset.factura) datos.factura[e.target.name] = e.target.value;
+        else datos.campos[e.target.name] = e.target.value;
+        e.target.classList.remove('is-invalid');
+        guardar();
+      }
     });
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -472,13 +508,13 @@
         el.classList.toggle('is-invalid', mal);
         if (mal) faltan.push(c.label.toLowerCase());
       });
-      if (datos.facturaA) {
-        CAMPOS_FACTURA.forEach(function (c) {
+      if (datos.tipoFactura) {
+        CAMPOS_FACTURA[datos.tipoFactura].forEach(function (c) {
           var el = $('fa-' + c.id);
           var v = (el.value || '').trim();
-          var mal = !v || (c.id === 'cuit' && v.replace(/\D/g, '').length !== 11);
+          var mal = !v || (c.digitos && c.digitos.indexOf(v.replace(/\D/g, '').length) === -1);
           el.classList.toggle('is-invalid', mal);
-          if (mal) faltan.push(c.id === 'cuit' ? 'CUIT (11 números)' : c.label.toLowerCase());
+          if (mal) faltan.push(c.id === 'cuit' ? 'CUIT (11 números)' : c.id === 'doc' ? 'DNI o CUIT' : c.label.toLowerCase());
         });
       }
       var err = $('formError');
@@ -504,18 +540,15 @@
         (l.cant > 1 ? ' c/u = ' + precio(l.subtotal) : ''));
     });
     t.push('');
-    if (datos.facturaA) {
-      t.push('Subtotal sin IVA: ' + precio(total()));
-      t.push('IVA 21%: ' + precio(iva()));
-      t.push('*Total con IVA: ' + precio(totalFinal()) + '*');
-    } else {
-      t.push('*Total: ' + precio(total()) + '* (precios sin IVA)');
-    }
+    t.push('Productos: ' + precio(total()));
+    if (datos.tipoFactura) t.push('IVA 21%: ' + precio(iva()));
+    t.push('Envío: gratis');
+    t.push('*Total' + (datos.tipoFactura ? ' con IVA' : '') + ': ' + precio(totalFinal()) + '*' + (datos.tipoFactura ? '' : ' (sin IVA)'));
     t.push('*Forma de pago:* ' + datos.pago);
-    if (datos.facturaA) {
+    if (datos.tipoFactura) {
       t.push('');
-      t.push('*Factura A*');
-      CAMPOS_FACTURA.forEach(function (campo) {
+      t.push('*Factura ' + datos.tipoFactura + '*');
+      CAMPOS_FACTURA[datos.tipoFactura].forEach(function (campo) {
         t.push(campo.label + ': ' + (datos.factura[campo.id] || '').trim());
       });
     }
@@ -532,7 +565,7 @@
   function enviar() {
     var url = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(mensaje());
     if (typeof window.gtag === 'function') {
-      window.gtag('event', 'pedido_combo', { value: totalFinal(), currency: 'ARS', items: cantidadTotal(), factura_a: datos.facturaA });
+      window.gtag('event', 'pedido_combo', { value: totalFinal(), currency: 'ARS', items: cantidadTotal(), factura: datos.tipoFactura || 'no' });
     }
     var w = window.open(url, '_blank', 'noopener');
     if (!w) window.location.href = url;
