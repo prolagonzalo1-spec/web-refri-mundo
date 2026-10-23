@@ -14,12 +14,12 @@
 
   // Categorías en el orden en que se muestran (de más a menos esencial).
   var CATEGORIAS = [
-    { id: 'bombas', nombre: 'Bombas de vacío' },
-    { id: 'manifolds', nombre: 'Manifolds' },
-    { id: 'vacuometros', nombre: 'Vacuómetros' },
-    { id: 'mangueras', nombre: 'Mangueras' },
-    { id: 'aceites', nombre: 'Aceites' },
-    { id: 'otros', nombre: 'Otros productos' }
+    { id: 'bombas', nombre: 'Bombas de vacío', corto: 'Bombas', icono: 'cat-bombas' },
+    { id: 'manifolds', nombre: 'Manifolds', icono: 'cat-manifolds' },
+    { id: 'vacuometros', nombre: 'Vacuómetros', icono: 'cat-vacuometros' },
+    { id: 'mangueras', nombre: 'Mangueras', icono: 'cat-mangueras' },
+    { id: 'aceites', nombre: 'Aceites', icono: 'cat-aceites' },
+    { id: 'otros', nombre: 'Otros productos', corto: 'Otros', icono: 'i-tool' }
   ];
 
   // Cómo se deduce la categoría a partir del nombre del producto.
@@ -206,8 +206,8 @@
   function armarPasos() {
     pasos = CATEGORIAS.filter(function (c) {
       return productos.some(function (p) { return p.cat === c.id; });
-    }).map(function (c) { return { id: c.id, nombre: c.nombre }; });
-    pasos.push({ id: 'final', nombre: 'Finalizar compra' });
+    }).map(function (c) { return { id: c.id, nombre: c.nombre, corto: c.corto || c.nombre, icono: c.icono }; });
+    pasos.push({ id: 'final', nombre: 'Finalizar compra', corto: 'Finalizar', icono: 'i-bag' });
     // Quitar del carrito lo que ya no existe (por ejemplo, si se quedó sin stock).
     Object.keys(carrito).forEach(function (id) {
       if (!productos.some(function (p) { return p.id === id; })) delete carrito[id];
@@ -248,16 +248,37 @@
   }
 
   // ---------- Render ----------
+  // Stepper: círculos con el dibujo de cada categoría, unidos por una línea que se llena
+  // hasta el paso activo. Se arma una vez y después solo se actualiza (así se animan los cambios).
+  function armarNav() {
+    var mitad = 50 / pasos.length; // centro del primer y último círculo, en %
+    $('stepsNav').innerHTML = '<div class="stepper" style="--inset:' + mitad + '%">' +
+      '<span class="stepper__track"></span><span class="stepper__fill"></span><span class="stepper__dot"></span>' +
+      '<ol class="stepper__list">' + pasos.map(function (paso, i) {
+        return '<li class="stepper__item' + (paso.id === 'final' ? ' stepper__item--final' : '') + '">' +
+          '<button type="button" class="stepper__btn" data-paso="' + i + '" aria-label="Paso ' + (i + 1) + ': ' + esc(paso.nombre) + '">' +
+          '<span class="stepper__circle"><svg class="stepper__icon" aria-hidden="true"><use href="#' + paso.icono + '"/></svg>' +
+          '<span class="stepper__count" hidden></span></span>' +
+          '<span class="stepper__label"><span class="stepper__largo">' + esc(paso.nombre) + '</span>' +
+          '<span class="stepper__corto">' + esc(paso.corto) + '</span></span></button></li>';
+      }).join('') + '</ol></div>';
+  }
   function renderNav() {
-    $('stepsNav').innerHTML = pasos.map(function (paso, i) {
+    if (!$('stepsNav').querySelector('.stepper')) armarNav();
+    var stepper = $('stepsNav').querySelector('.stepper');
+    stepper.style.setProperty('--prog', pasos.length > 1 ? pasoActual / (pasos.length - 1) : 0);
+    stepper.querySelectorAll('.stepper__item').forEach(function (li, i) {
+      var paso = pasos[i];
       var cuenta = paso.id === 'final' ? 0 : lineas().filter(function (l) { return l.p.cat === paso.id; })
         .reduce(function (s, l) { return s + l.cant; }, 0);
-      return '<button type="button" class="step-chip' + (i === pasoActual ? ' is-active' : '') +
-        (paso.id === 'final' ? ' step-chip--final' : '') + '" data-paso="' + i + '"' +
-        (i === pasoActual ? ' aria-current="step"' : '') + '>' +
-        '<span class="step-chip__num">' + (paso.id === 'final' ? '✓' : i + 1) + '</span>' + esc(paso.nombre) +
-        (cuenta ? '<span class="step-chip__count">' + cuenta + '</span>' : '') + '</button>';
-    }).join('');
+      li.classList.toggle('is-active', i === pasoActual);
+      li.classList.toggle('is-done', i < pasoActual);
+      var btn = li.querySelector('.stepper__btn');
+      if (i === pasoActual) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
+      var badge = li.querySelector('.stepper__count');
+      badge.textContent = cuenta;
+      badge.hidden = !cuenta;
+    });
   }
 
   function tarjeta(p) {
@@ -397,9 +418,16 @@
   }
 
   function irA(i) {
+    var cambio = pasoActual !== i;
     pasoActual = Math.max(0, Math.min(pasos.length - 1, i));
     renderNav();
     renderPaso();
+    if (cambio) { // el contenido del paso entra con un fundido suave
+      var main = $('comboMain');
+      main.classList.remove('is-entrando');
+      void main.offsetWidth;
+      main.classList.add('is-entrando');
+    }
     var nav = $('stepsNav');
     var activo = nav.querySelector('.is-active');
     if (activo && activo.scrollIntoView) activo.scrollIntoView({ block: 'nearest', inline: 'center' });

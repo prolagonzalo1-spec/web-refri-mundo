@@ -31,60 +31,125 @@
 .combo-hero h1 { color: var(--white); font-size: clamp(1.8rem, 3.6vw, 2.6rem); max-width: 22em; }
 .combo-hero__lead { color: #d3def5; font-size: 1.05rem; max-width: 40em; margin: 0; }
 
-/* ---------- Pasos ---------- */
+/* ---------- Pasos (stepper con dibujos) ---------- */
 .steps-nav {
-  display: flex;
-  gap: 8px;
   margin-top: -36px;
-  padding: 10px;
+  padding: 18px 12px 14px;
   background: var(--white);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  overflow-x: auto;
-  scrollbar-width: none;
   position: relative;
   z-index: 2;
 }
-.steps-nav::-webkit-scrollbar { display: none; }
-.step-chip {
-  flex: none;
-  display: inline-flex;
+.stepper { position: relative; --prog: 0; --c: 46px; }
+/* línea gris de fondo, línea azul de progreso y puntito que se desliza */
+.stepper__track, .stepper__fill {
+  position: absolute;
+  top: calc(var(--c) / 2 - 1px);
+  left: var(--inset); right: var(--inset);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.stepper__fill {
+  background: var(--royal);
+  transform-origin: left center;
+  transform: scaleX(var(--prog));
+  transition: transform .7s cubic-bezier(.34, 1.25, .64, 1);
+}
+.stepper__dot {
+  position: absolute;
+  top: calc(var(--c) / 2);
+  left: calc(var(--inset) + var(--prog) * (100% - 2 * var(--inset)));
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--royal);
+  transform: translate(-50%, -50%);
+  transition: left .7s cubic-bezier(.34, 1.25, .64, 1);
+}
+.stepper__list { position: relative; display: flex; margin: 0; padding: 0; list-style: none; }
+.stepper__item { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
+.stepper__btn {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  max-width: 100%;
+  padding: 0 2px;
   border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font: 600 .92rem var(--font-body);
+  background: none;
   cursor: pointer;
-  white-space: nowrap;
-  transition: background-color .2s, color .2s;
+  font: inherit;
 }
-.step-chip:hover { background: var(--ice); color: var(--navy); }
-.step-chip.is-active { background: var(--navy); color: var(--white); }
-.step-chip__num {
-  display: inline-grid;
+.stepper__circle {
+  position: relative;
+  display: grid;
   place-items: center;
-  width: 24px; height: 24px;
+  width: var(--c); height: var(--c);
   border-radius: 50%;
   background: var(--ice);
-  color: var(--navy);
-  font: 700 .78rem var(--font-head);
+  color: #8593ad;
+  transition: background-color .3s, color .3s, transform .35s cubic-bezier(.34, 1.56, .64, 1);
 }
-.step-chip.is-active .step-chip__num { background: rgba(255, 255, 255, .18); color: var(--white); }
-.step-chip--final .step-chip__num { background: #e2f6ea; color: var(--wa-600); }
-.step-chip__count {
-  min-width: 22px; height: 22px;
-  padding: 0 6px;
-  display: inline-grid;
+.stepper__btn:hover .stepper__circle { background: var(--ice-200); color: var(--navy); }
+.stepper__icon { width: 24px; height: 24px; }
+/* pasos ya recorridos */
+.is-done .stepper__circle, .is-done .stepper__btn:hover .stepper__circle { background: var(--royal); color: var(--white); }
+/* paso actual: más grande, relleno y con un pulso suave */
+.is-active .stepper__circle, .is-active .stepper__btn:hover .stepper__circle {
+  background: var(--navy);
+  color: var(--white);
+  transform: scale(1.1);
+}
+.stepper__item--final.is-active .stepper__circle { background: var(--wa); }
+.is-active .stepper__circle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(29, 79, 191, .45);
+  animation: stepper-pulso 1.1s ease-in-out infinite alternate;
+}
+.stepper__item--final.is-active .stepper__circle::after { box-shadow: 0 0 0 2px rgba(31, 174, 87, .5); }
+.is-active .stepper__icon { animation: stepper-pop .45s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes stepper-pulso { from { transform: scale(1); opacity: 1; } to { transform: scale(1.4); opacity: .15; } }
+@keyframes stepper-pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.stepper__count {
+  position: absolute;
+  top: -5px; right: -7px;
+  min-width: 20px; height: 20px;
+  padding: 0 5px;
+  display: grid;
   place-items: center;
+  border: 2px solid var(--white);
   border-radius: 999px;
   background: var(--wa);
   color: var(--white);
-  font: 700 .75rem var(--font-head);
+  font: 700 .7rem/1 var(--font-head);
+  animation: stepper-pop .35s cubic-bezier(.34, 1.56, .64, 1);
 }
-.step-chip:focus-visible, .qty__btn:focus-visible, .cart__remove:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 2px; }
+.stepper__count[hidden] { display: none; }
+.stepper__label {
+  font: 600 .82rem/1.25 var(--font-body);
+  color: var(--muted);
+  text-align: center;
+  transition: color .3s;
+}
+.is-active .stepper__label, .is-done .stepper__label { color: var(--navy); }
+.is-active .stepper__label { font-weight: 700; }
+.stepper__corto { display: none; }
+.stepper__btn:focus-visible { outline: none; }
+.stepper__btn:focus-visible .stepper__circle { box-shadow: 0 0 0 3px var(--white), 0 0 0 5px #8fb3ff; }
+
+/* el contenido de cada paso entra con un fundido */
+.combo-main.is-entrando { animation: paso-entra .3s ease-out; }
+@keyframes paso-entra { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .stepper__fill, .stepper__dot, .stepper__circle { transition: none; }
+  .is-active .stepper__circle::after, .is-active .stepper__icon, .stepper__count, .combo-main.is-entrando { animation: none; }
+}
+.qty__btn:focus-visible, .cart__remove:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 2px; }
 
 /* ---------- Disposición ---------- */
 .combo-layout {
@@ -387,6 +452,14 @@ body:not(.has-items) .cart__cta { opacity: .55; }
 }
 
 @media (max-width: 600px) {
+  .steps-nav { padding: 14px 4px 12px; }
+  .stepper { --c: 40px; }
+  .stepper__icon { width: 21px; height: 21px; }
+  /* en celular no entran los 6 nombres: se ve solo el del paso actual */
+  .stepper__label { font-size: .74rem; white-space: nowrap; visibility: hidden; }
+  .is-active .stepper__label { visibility: visible; }
+  .stepper__largo { display: none; }
+  .stepper__corto { display: inline; }
   .combo-back { font-size: 0; gap: 0; }
   .combo-back .icon { width: 22px; height: 22px; }
   .combo-hero { padding: 40px 0 76px; }
