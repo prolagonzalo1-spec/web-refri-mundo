@@ -1,0 +1,24 @@
+{
+  "fuente": "respaldo",
+  "actualizado": "2026-10-23",
+  "productos": [
+    { "nombre": "Bomba DVR 1A (60 L-Min)", "precio": 295257, "disponible": true },
+    { "nombre": "Bomba DVR 2A (130 L-Min) R32", "precio": 504560, "disponible": true },
+    { "nombre": "Bomba DVR 3A (170 L-Min) R32", "precio": 497184, "disponible": true },
+    { "nombre": "Bomba DVP 4A (272 L-Min)", "precio": 665945, "disponible": true },
+    { "nombre": "Supervac VP1 (58 L-Min)", "precio": 215382, "disponible": true },
+    { "nombre": "Supervac VP2 (114 L-Min)", "precio": 276372, "disponible": true },
+    { "nombre": "Vacuometro digital CON APP", "precio": 239932, "disponible": true },
+    { "nombre": "Vacuometro digital SIN APP", "precio": 203248, "disponible": true },
+    { "nombre": "Aceite DOSIVAC x 2u", "precio": 45475, "disponible": true },
+    { "nombre": "Maquina Recuperadora de Gas", "precio": 1657500, "disponible": false },
+    { "nombre": "Manguera de alto vacío", "precio": 69506, "disponible": true },
+    { "nombre": "Manifold de aluminio analogico DOSIVAC R22 410 con manguera 120cm y estuche", "precio": 129625, "disponible": true },
+    { "nombre": "Bomba DVR 3A (170 L-Min) R32 + Manguera alto vacío", "precio": 615701, "disponible": true },
+    { "nombre": "Recuperadora de gas", "precio": 1423500, "disponible": true },
+    { "nombre": "Manifold DIGITAL BLUETOOTH Y PINZAS", "precio": 351071, "disponible": true },
+    { "nombre": "Manifold digital SIN APP", "precio": 242032, "disponible": true },
+    { "nombre": "Manifold DIGITAL (Dosivac) WP", "precio": 374476, "disponible": false },
+    { "nombre": "Bomba DVR 2A (130 L-Min) WP", "precio": 0, "disponible": false }
+  ]
+}
