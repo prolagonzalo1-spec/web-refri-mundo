@@ -1,13 +1,16 @@
 // Refri Mundo — Precios desde el Excel de OneDrive (Cloudflare Worker)
 //
 // Descarga el Excel compartido en OneDrive, lee SOLO la hoja WHATSAPP
-// y devuelve nombre, precio (columna "VENTA WP") y disponibilidad
-// (las filas con el nombre pintado de rojo se marcan como no disponibles).
+// y devuelve nombre, precio (columna "VENTA WP") y si va a la web
+// (columna cuyo título incluye "web", con sí / no; si no existe esa columna,
+// se ocultan las filas con el nombre pintado de rojo).
 // Costos, ganancias y el resto de las hojas nunca salen de acá.
 //
 // Configuración en Cloudflare (Settings → Variables and Secrets):
 //   ONEDRIVE_URL  (Secret)  Link de OneDrive "Cualquier persona con el vínculo puede ver"
 //   HOJA          (opcional) Nombre de la hoja. Por defecto: WHATSAPP
+//
+// Diagnóstico: abrir la dirección del Worker agregando ?debug=1 al final.
 
 const CACHE_MS = 5 * 60 * 1000; // se vuelve a leer el Excel cada 5 minutos como máximo
 let memoria = { hora: 0, cuerpo: null };
@@ -20,6 +23,21 @@ export default {
       'Cache-Control': 'public, max-age=120'
     };
     if (request.method === 'OPTIONS') return new Response(null, { headers });
+
+    if (new URL(request.url).searchParams.has('debug')) {
+      const log = [];
+      let resultado = 'ok';
+      try {
+        const excel = await descargar(env.ONEDRIVE_URL || '', log);
+        const productos = await leerHoja(excel, env.HOJA || 'WHATSAPP');
+        resultado = 'ok: ' + productos.length + ' productos leídos';
+      } catch (e) {
+        resultado = 'error: ' + (e && e.message || e);
+      }
+      return new Response(JSON.stringify({ resultado, intentos: log }, null, 2), {
+        headers: { ...headers, 'Cache-Control': 'no-store' }
+      });
+    }
 
     if (memoria.cuerpo && Date.now() - memoria.hora < CACHE_MS) {
       return new Response(memoria.cuerpo, { headers });
@@ -46,22 +64,79 @@ export default {
 };
 
 // ---------- Descarga desde OneDrive ----------
-async function descargar(link) {
-  const b64 = btoa(link.trim()).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
-  const intentos = ['https://api.onedrive.com/v1.0/shares/u!' + b64 + '/root/content'];
-  try {
-    const u = new URL(link.trim());
-    u.searchParams.set('download', '1');
-    intentos.push(u.toString());
-  } catch (e) {}
+const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' };
 
-  for (const url of intentos) {
+// Para el diagnóstico: muestra el sitio y el formato del link sin revelar los códigos.
+function ocultar(url) {
+  try {
+    const u = new URL(url);
+    const ruta = u.pathname.split('/').map((p) => (p.length > 10 ? p.slice(0, 3) + '…' : p)).join('/');
+    const params = [...u.searchParams.keys()].join(',');
+    return u.host + ruta + (params ? ' ?' + params : '');
+  } catch (e) { return '(link inválido)'; }
+}
+const b64url = (t) => btoa(t).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
+
+async function descargar(link, log = []) {
+  link = (link || '').trim();
+  if (!link) throw new Error('Falta configurar ONEDRIVE_URL');
+
+  // 1) Seguir las redirecciones del link corto (1drv.ms) para ver a dónde lleva
+  let actual = link;
+  for (let i = 0; i < 6; i++) {
     try {
-      const r = await fetch(url, { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 RefriMundoPrecios' } });
-      if (!r.ok) continue;
-      const bytes = new Uint8Array(await r.arrayBuffer());
-      if (bytes[0] === 0x50 && bytes[1] === 0x4b) return bytes; // es un archivo .xlsx (zip)
+      const r = await fetch(actual, { redirect: 'manual', headers: UA });
+      const destino = r.headers.get('location');
+      log.push({ paso: 'redirección', url: ocultar(actual), estado: r.status });
+      if (r.status >= 300 && r.status < 400 && destino) actual = new URL(destino, actual).toString();
+      else break;
+    } catch (e) {
+      log.push({ paso: 'redirección', url: ocultar(actual), error: String(e.message || e) });
+      break;
+    }
+  }
+
+  // 2) Armar las distintas formas de descarga conocidas
+  const candidatos = [
+    'https://api.onedrive.com/v1.0/shares/u!' + b64url(link) + '/root/content',
+    'https://graph.microsoft.com/v1.0/shares/u!' + b64url(link) + '/driveItem/content'
+  ];
+  for (const base of [actual, link]) {
+    try {
+      const u = new URL(base);
+      const q = u.searchParams;
+      const resid = q.get('resid') || q.get('id');
+      const authkey = q.get('authkey') || q.get('authKey');
+      if (resid) {
+        candidatos.push('https://onedrive.live.com/download?resid=' + encodeURIComponent(resid) +
+          (authkey ? '&authkey=' + encodeURIComponent(authkey) : ''));
+      }
+      if (q.get('redeem')) candidatos.push('https://api.onedrive.com/v1.0/shares/u!' + q.get('redeem') + '/root/content');
+      // Links nuevos: 1drv.ms/x/c/{CID}/{CÓDIGO} o onedrive.live.com/:x:/g/personal/{CID}/{CÓDIGO}
+      const m = u.pathname.match(/\/c\/([0-9a-f]+)\/([^/?#]+)/i) || u.pathname.match(/\/personal\/([^/]+)\/([^/?#]+)/i);
+      if (m) {
+        candidatos.push('https://my.microsoftpersonalcontent.com/personal/' + m[1] + '/_layouts/15/download.aspx?share=' + m[2]);
+        candidatos.push('https://onedrive.live.com/:x:/g/personal/' + m[1] + '/' + m[2] + '?download=1');
+      }
+      const d = new URL(base);
+      d.searchParams.set('download', '1');
+      candidatos.push(d.toString());
     } catch (e) {}
+  }
+
+  // 3) Probar cada una hasta conseguir el archivo .xlsx
+  for (const url of [...new Set(candidatos)]) {
+    try {
+      const r = await fetch(url, { redirect: 'follow', headers: UA });
+      const tipo = r.headers.get('content-type') || '';
+      if (!r.ok) { log.push({ paso: 'descarga', url: ocultar(url), estado: r.status, tipo }); continue; }
+      const bytes = new Uint8Array(await r.arrayBuffer());
+      const esExcel = bytes[0] === 0x50 && bytes[1] === 0x4b;
+      log.push({ paso: 'descarga', url: ocultar(url), estado: r.status, tipo, tamaño: bytes.length, excel: esExcel });
+      if (esExcel) return bytes;
+    } catch (e) {
+      log.push({ paso: 'descarga', url: ocultar(url), error: String(e.message || e) });
+    }
   }
   throw new Error('No se pudo descargar el Excel desde OneDrive');
 }
@@ -183,15 +258,28 @@ async function leerHoja(bytes, nombreHoja) {
   }
 
   // Encabezados: "Productos" y "VENTA WP"
-  let filaEnc = 0, colNombre = 'A', colPrecio = 'L';
+  // y la columna que indica si va a la web (cualquier título que diga "web")
+  let filaEnc = 0, colNombre = 'A', colPrecio = 'L', colWeb = null;
   for (const [n, celdas] of filas) {
     for (const [col, c] of Object.entries(celdas)) {
       const t = normalizar(c.texto);
       if (t === 'productos') { filaEnc = n; colNombre = col; }
-      if (t === 'venta wp') colPrecio = col;
     }
-    if (filaEnc) break;
+    if (filaEnc) {
+      for (const [col, c] of Object.entries(celdas)) {
+        const t = normalizar(c.texto);
+        if (t === 'venta wp') colPrecio = col;
+      }
+      break;
+    }
   }
+  for (const [n, celdas] of filas) {
+    if (colWeb || n > filaEnc + 3) break;
+    for (const [col, c] of Object.entries(celdas)) {
+      if (/\bweb\b/.test(normalizar(c.texto)) && col !== colNombre) colWeb = col;
+    }
+  }
+  const esSi = (c) => !!c && /^(si|s|x|1|true|verdadero)$/.test(normalizar(c.texto));
 
   const productos = [];
   for (const n of [...filas.keys()].sort((x, y) => x - y)) {
@@ -203,7 +291,7 @@ async function leerHoja(bytes, nombreHoja) {
     productos.push({
       nombre: nombre.texto,
       precio: precio && precio.numero !== null && isFinite(precio.numero) ? precio.numero : 0,
-      disponible: !nombre.rojo
+      disponible: colWeb ? esSi(celdas[colWeb]) : !nombre.rojo
     });
   }
   return productos;
