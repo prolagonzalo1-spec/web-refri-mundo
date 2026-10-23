@@ -78,7 +78,6 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
      (el dueño lo aprobó); nunca se recorta el producto ni se lo retoca.
    - Bombas DVR: las que dicen "R32" en el nombre → `img/bomba-dvr-r32.webp`; las demás → `img/bomba-vacio.webp`.
      Ambas con la nota "Imagen ilustrativa de la línea DVR. Cambia la capacidad."
-   - Falta: foto del **aceite** (por ahora sale "Foto próximamente").
    - **Higgsfield: no usarlo para nada sin el OK explícito del dueño.** Las pruebas anteriores (mejora 2K que
      inventaba letras y fotos compuestas con fondo armado) salieron mal y se descartaron.
 3. **Publicar el combo** cuando el dueño dé el OK: botón "Armá tu combo" en la página principal, quitar el
