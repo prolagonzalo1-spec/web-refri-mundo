@@ -131,8 +131,8 @@
         .map(function (p) {
           return {
             id: slug(p.nombre),
-            nombre: String(p.nombre).trim(),
-            precio: Number(p.precio),
+            nombre: String(p.nombre).replace(/\s+/g, ' ').trim(),
+            precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
             cat: categoriaDe(p.nombre),
             foto: fotoDe(p.nombre)
           };
