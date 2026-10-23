@@ -55,6 +55,8 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
   **sin efectivo**) y completa datos de envío: nombre y apellido, provincia, localidad, calle, altura, piso (opc.),
   departamento (opc.), observaciones (opc.), código postal, código de área, celular, correo. Se abre WhatsApp con
   "Hola Refri Mundo, quiero comprar este combo:" + lista + total + pago + datos.
+- **Nombres en la web**: se definen en `NOMBRES` (`js/combo.js`) a partir del nombre del Excel, que no se toca.
+  En las bombas se agrega abajo la capacidad (L/min) y "Apta para gas R32" si el nombre dice R32.
 - La categoría se deduce del **nombre** del producto (reglas en `REGLAS_CATEGORIA`). Se excluyen las
   recuperadoras de gas y los combos armados (nombres con "+"). Fotos por palabras del nombre en `FOTOS`
   (sin foto → ícono "Foto próximamente").

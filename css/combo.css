@@ -148,6 +148,7 @@
 .pcard__body { display: flex; flex-direction: column; flex: 1; padding: 16px 16px 18px; }
 .pcard__name { font-size: .98rem; margin-bottom: 8px; color: var(--ink); line-height: 1.35; }
 .pcard__price { font: 800 1.25rem var(--font-head); color: var(--navy); margin: auto 0 14px; }
+.pcard__detail { font: 600 .8rem var(--font-body); color: var(--royal); line-height: 1.4; margin: -4px 0 8px; }
 .pcard__note { font-size: .78rem; font-style: italic; color: var(--muted); line-height: 1.4; margin: -2px 0 10px; }
 
 /* ---------- Cantidad ---------- */

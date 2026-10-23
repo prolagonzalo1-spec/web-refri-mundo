@@ -35,6 +35,20 @@
   // Productos que no se ofrecen en el armado de combos.
   var EXCLUIR = [/recuperadora/];
 
+  // Nombre que se muestra en la web (el Excel no se toca: se busca por palabras del nombre original).
+  // "$1" se reemplaza por el número del modelo. En las bombas el detalle suma la capacidad y si es apta R32.
+  var NOMBRES = [
+    { test: /\b(?:dvr|dvp)\s*(\d)a\b/, nombre: 'Bomba de vacío DVR $1A' },
+    { test: /supervac\s*vp\s*(\d)/, nombre: 'Bomba de vacío Supervac VP$1' },
+    { test: /manifold.*(bluetooth|pinza)/, nombre: 'Manifold digital con aplicación',
+      detalle: 'Con pinzas de temperatura' },
+    { test: /manifold digital.*sin app/, nombre: 'Manifold digital' },
+    { test: /manifold.*(aluminio|analogico)/, nombre: 'Manifold de aluminio analógico Dosivac' },
+    { test: /vacuometro.*con app/, nombre: 'Vacuómetro digital con aplicación' },
+    { test: /manguera/, nombre: 'Manguera de alto vacío Dosivac' },
+    { test: /aceite/, nombre: 'Aceite Dosivac x 2 L', detalle: '2 envases de 1 litro' }
+  ];
+
   // Fotos de cada producto (se buscan por palabras del nombre).
   // "nota" es un texto opcional que se muestra debajo del nombre.
   var FOTOS = [
@@ -114,6 +128,27 @@
     }
     return {};
   }
+  function nombreWeb(nombre) {
+    var n = normalizar(nombre);
+    var limpio = String(nombre).replace(/\s+/g, ' ').trim();
+    var r = { nombre: limpio, detalle: '' };
+    for (var i = 0; i < NOMBRES.length; i++) {
+      var m = n.match(NOMBRES[i].test);
+      if (m) {
+        r = { nombre: NOMBRES[i].nombre.replace('$1', m[1] || ''), detalle: NOMBRES[i].detalle || '' };
+        break;
+      }
+    }
+    if (categoriaDe(nombre) === 'bombas') {
+      var cap = n.match(/(\d+)\s*l\s*-?\s*min/);
+      var extra = [cap ? cap[1] + ' L/min' : '', /\br32\b/.test(n) ? 'Apta para gas R32' : ''];
+      r.detalle = extra.filter(Boolean).join(' · ');
+    }
+    // Nombre en una sola línea para el carrito y el mensaje de WhatsApp.
+    var d = r.detalle.replace(/ · (\w)/g, function (x, c) { return ', ' + c.toLowerCase(); });
+    r.completo = r.nombre + (d ? ' (' + d.charAt(0).toLowerCase() + d.slice(1) + ')' : '');
+    return r;
+  }
   function guardar() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ carrito: carrito, datos: datos })); } catch (e) {}
   }
@@ -142,9 +177,12 @@
         })
         .map(function (p) {
           var foto = fotoDe(p.nombre);
+          var web = nombreWeb(p.nombre);
           return {
             id: slug(p.nombre),
-            nombre: String(p.nombre).replace(/\s+/g, ' ').trim(),
+            nombre: web.nombre,
+            detalle: web.detalle,
+            completo: web.completo,
             precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
             cat: categoriaDe(p.nombre),
             foto: foto.src || '',
@@ -208,12 +246,13 @@
   function tarjeta(p) {
     var cant = carrito[p.id] || 0;
     var foto = p.foto
-      ? '<img src="' + p.foto + '" alt="' + esc(p.nombre) + '" loading="lazy">'
+      ? '<img src="' + p.foto + '" alt="' + esc(p.completo) + '" loading="lazy">'
       : '<div class="pcard__placeholder"><svg aria-hidden="true"><use href="#i-tool"/></svg><span>Foto próximamente</span></div>';
     return '<article class="pcard' + (cant ? ' is-selected' : '') + '" data-card="' + p.id + '">' +
       '<div class="pcard__img">' + foto + '</div>' +
       '<div class="pcard__body">' +
         '<h3 class="pcard__name">' + esc(p.nombre) + '</h3>' +
+        (p.detalle ? '<p class="pcard__detail">' + esc(p.detalle) + '</p>' : '') +
         (p.nota ? '<p class="pcard__note">' + esc(p.nota) + '</p>' : '') +
         '<p class="pcard__price">' + precio(p.precio) + '</p>' +
         '<div class="qty" role="group" aria-label="Cantidad de ' + esc(p.nombre) + '">' +
@@ -258,7 +297,7 @@
       ? '<ul class="review">' + ls.map(function (l) {
           return '<li class="review__item">' +
             (l.p.foto ? '<img src="' + l.p.foto + '" alt="" class="review__img">' : '<span class="review__img review__img--empty"><svg aria-hidden="true"><use href="#i-tool"/></svg></span>') +
-            '<div class="review__info"><strong>' + esc(l.p.nombre) + '</strong><span>' + precio(l.p.precio) + ' c/u</span></div>' +
+            '<div class="review__info"><strong>' + esc(l.p.completo) + '</strong><span>' + precio(l.p.precio) + ' c/u</span></div>' +
             '<div class="qty qty--sm"><button type="button" class="qty__btn" data-menos="' + l.p.id + '" aria-label="Quitar uno"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>' +
             '<span class="qty__val" data-qty="' + l.p.id + '">' + l.cant + '</span>' +
             '<button type="button" class="qty__btn qty__btn--add" data-mas="' + l.p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button></div>' +
@@ -305,7 +344,7 @@
     var ls = lineas();
     $('cartList').innerHTML = ls.map(function (l) {
       return '<li class="cart__item"><span class="cart__qty">' + l.cant + '×</span>' +
-        '<span class="cart__name">' + esc(l.p.nombre) + '</span>' +
+        '<span class="cart__name">' + esc(l.p.completo) + '</span>' +
         '<span class="cart__price">' + precio(l.subtotal) + '</span>' +
         '<button type="button" class="cart__remove" data-quitar="' + l.p.id + '" aria-label="Quitar ' + esc(l.p.nombre) + '"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></li>';
     }).join('');
@@ -373,7 +412,7 @@
     t.push('Hola Refri Mundo, quiero comprar este combo:');
     t.push('');
     lineas().forEach(function (l) {
-      t.push('• ' + l.cant + ' x ' + l.p.nombre + ' — ' + precio(l.p.precio) +
+      t.push('• ' + l.cant + ' x ' + l.p.completo + ' — ' + precio(l.p.precio) +
         (l.cant > 1 ? ' c/u = ' + precio(l.subtotal) : ''));
     });
     t.push('');
