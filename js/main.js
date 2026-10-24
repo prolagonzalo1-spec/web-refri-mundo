@@ -147,7 +147,7 @@
       // En celular la parte que se frena queda centrada en la pantalla
       pin.style.top = celu.matches ? cabecera + Math.max(0, (libre - alto) / 2) + 'px' : '';
       // Cuánto hay que bajar para ver la animación completa (en celular, más corta)
-      despiece.style.height = alto + window.innerHeight * (celu.matches ? 2 : 3) + 'px';
+      despiece.style.height = alto + window.innerHeight * (celu.matches ? 2.6 : 4) + 'px';
       // Posición final de la foto (sin transformar) y cuánto hay que agrandarla al comienzo
       var rp = pin.getBoundingClientRect();
       var rf = figura.getBoundingClientRect();
