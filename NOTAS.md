@@ -102,7 +102,8 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
      Ambas con la nota "Imagen ilustrativa de la línea DVR. Cambia la capacidad."
    - **Higgsfield: no usarlo para nada sin el OK explícito del dueño.** Las pruebas anteriores (mejora 2K que
      inventaba letras y fotos compuestas con fondo armado) salieron mal y se descartaron.
-3. **Publicar el combo** cuando el dueño dé el OK: botón "Armá tu combo" en la página principal, quitar el
-   `noindex` de `combo.html`, agregarla a `sitemap.xml`, actualizar `data/productos.json` y pedir merge.
+3. ✅ **Combo publicado** (2026-10-24): botón "Armá tu combo" en la portada y tarjeta ancha en Productos, tarjetas de
+   bomba/manifold/vacuómetro llevan a su paso del combo, sin `noindex`, en `sitemap.xml`, respaldo de precios al día.
+   Después del merge: rehacer la rama desde `main` y pedir a Google (Search Console) que indexe `/combo.html`.
 4. Opcionales conversados: redirigir `refrimundo.ar`; contador de ventas de Mercado Libre vía API;
    marcar `contacto_whatsapp` / `pedido_combo` como conversiones en Google Ads.
