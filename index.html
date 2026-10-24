@@ -137,6 +137,9 @@
 
     <!-- ===== Nosotros ===== -->
     <section class="section" id="nosotros">
+      <!-- Despiece: al bajar, la bomba armada se desarma y se acomoda al lado del texto (js/main.js) -->
+      <div class="despiece" id="despiece">
+      <div class="despiece__pin">
       <div class="container about">
         <div class="about__text">
           <p class="eyebrow">Quiénes somos</p>
@@ -145,8 +148,12 @@
           <p>Sabemos que una herramienta que falla es un trabajo que se frena. Por eso elegimos productos confiables, respetamos la garantía de fábrica y acompañamos a cada cliente para que su equipo rinda como tiene que rendir.</p>
         </div>
         <figure class="about__media">
-          <img src="img/bomba-interior.webp" alt="Vista interior ilustrativa de una bomba de vacío Dosivac DVR II" width="1000" height="750" loading="lazy">
+          <img class="despiece__armada" src="img/bomba-armada.webp" alt="" width="1260" height="945" aria-hidden="true">
+          <img class="despiece__desarmada" src="img/bomba-interior.webp" alt="Vista interior ilustrativa de una bomba de vacío Dosivac DVR II" width="1000" height="750">
         </figure>
+      </div>
+      <p class="despiece__hint" aria-hidden="true">Bajá para ver por dentro <span>↓</span></p>
+      </div>
       </div>
 
       <div class="container">

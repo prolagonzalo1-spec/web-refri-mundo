@@ -263,6 +263,71 @@ p { margin: 0 0 1em; }
 }
 .about__media img { width: 100%; height: auto; }
 
+/* ---------- Despiece de la bomba (Nosotros) ----------
+   Sin JavaScript o con "reducir movimiento" se ve como siempre: texto + bomba desarmada.
+   Con .despiece--on (lo pone main.js) la sección se frena en pantalla mientras se baja:
+   la bomba arranca armada y grande, se desarma y se achica hasta su lugar al lado del texto. */
+.about__media { position: relative; }
+.despiece__armada { display: none; }
+.despiece__hint { display: none; }
+.despiece--on .despiece__pin {
+  position: sticky;
+  top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  height: calc(100svh - var(--header-h));
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.despiece--on .despiece__pin > .container { width: 100%; }
+.despiece--on .about__media {
+  transform-origin: center center;
+  will-change: transform;
+  z-index: 1;
+}
+.despiece--on .despiece__armada,
+.despiece--on .despiece__desarmada { will-change: opacity, transform; }
+.despiece--on .despiece__armada {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+.despiece--on .about__text { will-change: opacity, transform; }
+.despiece--on .despiece__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  z-index: 2;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--navy);
+  font: 600 .85rem var(--font-body);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.despiece__hint span { display: inline-block; animation: despiece-flecha 1.4s ease-in-out infinite; }
+@keyframes despiece-flecha { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+/* En celular: lo que se frena es el título + la foto (centrado en pantalla, main.js calcula "top");
+   los párrafos siguen debajo. La foto arranca más ancha que la pantalla: se recortan los costados. */
+#nosotros { overflow-x: clip; }
+@media (max-width: 900px) {
+  .despiece--on .despiece__pin { height: auto; overflow: visible; padding-block: 8px; }
+  .despiece--on .about { gap: 24px; }
+  .despiece--on .despiece__hint { bottom: -64px; }
+  .despiece-texto-celu { margin-top: 24px; }
+  .despiece-texto-celu p { color: var(--muted); font-size: 1.05rem; }
+}
+
 .values {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
