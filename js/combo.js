@@ -600,8 +600,21 @@
 
   // ---------- Inicio ----------
   recuperar();
+  // Si se llega con un enlace a una categoría (ej. combo.html#manifolds), se abre en ese paso
+  function pasoDelEnlace() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    for (var i = 0; i < pasos.length; i++) if (pasos[i].id === id) return i;
+    return -1;
+  }
+  window.addEventListener('hashchange', function () {
+    var i = pasoDelEnlace();
+    if (i >= 0) irA(i);
+  });
+
   cargar().then(function () {
     armarPasos();
+    var inicial = pasoDelEnlace();
+    if (inicial >= 0) pasoActual = inicial;
     renderNav();
     renderPaso();
     renderCarrito();

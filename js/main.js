@@ -49,85 +49,41 @@
   // Año actual en el pie
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Despiece de la bomba en "Quiénes somos": la sección se frena mientras se baja,
-  // la bomba armada (grande) se desarma (video de Higgsfield en cuadros), se achica
-  // hasta su lugar y aparece el texto.
+  // Despiece de la bomba en "Quiénes somos": la bomba espera armada y grande; al llegar a la
+  // sección la página se frena un momento, se reproduce el video del desarmado (Higgsfield),
+  // la bomba se achica a su lugar, aparece el texto y se puede seguir bajando.
+  // Una vez visto queda desarmada (aunque se vuelva al inicio); al refrescar la página se repite.
   var despiece = document.getElementById('despiece');
   var sinMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (despiece && !sinMovimiento && window.requestAnimationFrame) {
+  if (despiece && !sinMovimiento) {
     var pin = despiece.querySelector('.despiece__pin');
-    var grilla = despiece.querySelector('.about');
     var texto = despiece.querySelector('.about__text');
     var figura = despiece.querySelector('.about__media');
-    var lienzo = despiece.querySelector('.despiece__video');
-    var ctx = lienzo.getContext('2d');
-    var desarmada = despiece.querySelector('.despiece__desarmada');
-    // Cuadros del video (img/despiece/000.webp ... 060.webp): el primero se carga ya,
-    // el resto cuando la sección está por aparecer, para no frenar la entrada a la página.
-    var totalCuadros = +lienzo.getAttribute('data-cuadros');
-    var ruta = lienzo.getAttribute('data-ruta');
-    var cuadros = [];
-    var cuadroActual = -1;
-    var cargarCuadro = function (i) {
-      if (cuadros[i]) return;
-      var im = new Image();
-      im.decoding = 'async';
-      im.onload = function () { im.listo = true; if (i === 0 || i === cuadroActual) dibujar(cuadroActual < 0 ? 0 : cuadroActual, true); };
-      im.src = ruta + ('00' + i).slice(-3) + '.webp';
-      cuadros[i] = im;
-    };
-    var dibujar = function (i, forzar) {
-      if (i === cuadroActual && !forzar) return;
-      cuadroActual = i;
-      // si ese cuadro todavía no llegó, se muestra el más cercano anterior que ya esté
-      for (var j = i; j >= 0; j--) {
-        if (cuadros[j] && cuadros[j].listo) { ctx.drawImage(cuadros[j], 0, 0, lienzo.width, lienzo.height); return; }
-      }
-    };
-    cargarCuadro(0);
-    var cargarTodos = function () { for (var k = 1; k < totalCuadros; k++) cargarCuadro(k); };
-    // Se cargan cuando la sección se acerca o, como muy tarde, cuando terminó de cargar la página
-    if ('IntersectionObserver' in window) {
-      var vigia = new IntersectionObserver(function (e) {
-        if (e[0].isIntersecting) { cargarTodos(); vigia.disconnect(); }
-      }, { rootMargin: '1500px 0px' });
-      vigia.observe(despiece);
-    }
-    if (document.readyState === 'complete') cargarTodos();
-    else window.addEventListener('load', function () { setTimeout(cargarTodos, 300); });
-    var aviso = despiece.querySelector('.despiece__hint');
+    var video = despiece.querySelector('.despiece__video');
+    var saltar = despiece.querySelector('.despiece__saltar');
     var celu = window.matchMedia('(max-width: 900px)');
     var cajaCelu = document.createElement('div');
     cajaCelu.className = 'container despiece-texto-celu';
-    var medida = {};
-    var pendiente = false;
+    var parrafos = [].slice.call(texto.querySelectorAll('p:not(.eyebrow)'));
+    var CLAVE = 'rm-despiece-visto';
+    var estado = 'espera'; // espera → reproduciendo → listo
+    var posicion = 0;      // dónde queda frenada la página mientras corre el video
+    var ultimoY = window.scrollY;
+    var saltoAncla = 0;
 
-    var tramo = function (p, desde, hasta) { return Math.min(1, Math.max(0, (p - desde) / (hasta - desde))); };
-    var suave = function (t) { return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+    // ¿Ya se vio en esta pestaña? Si la página se refrescó, se vuelve a mostrar.
+    var visto = false;
+    try {
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') sessionStorage.removeItem(CLAVE);
+      visto = sessionStorage.getItem(CLAVE) === '1';
+    } catch (e) {}
 
-    var pintar = function () {
-      pendiente = false;
-      var recorrido = despiece.offsetHeight - medida.alto;
-      var bajado = pin.getBoundingClientRect().top - despiece.getBoundingClientRect().top;
-      var p = recorrido > 0 ? Math.min(1, Math.max(0, bajado / recorrido)) : 1;
-      var esCelu = celu.matches;
-      // 1) se desarma: avanza el video cuadro por cuadro al ritmo del scroll
-      var d = tramo(p, .06, esCelu ? .52 : .5);
-      dibujar(Math.round(d * (totalCuadros - 1)));
-      // 2) se achica y vuelve a su lugar
-      var a = suave(tramo(p, esCelu ? .55 : .52, esCelu ? 1 : .82));
-      var s = medida.escala + (1 - medida.escala) * a;
-      figura.style.transform = 'translate(' + medida.dx * (1 - a) + 'px,' + medida.dy * (1 - a) + 'px) scale(' + s + ')';
-      // 3) aparece el texto (en celular, el título arriba de la foto)
-      var t = suave(tramo(p, esCelu ? .7 : .68, esCelu ? 1 : .94));
-      texto.style.opacity = t;
-      texto.style.transform = esCelu ? 'translateY(' + (16 * (1 - t)) + 'px)' : 'translateX(' + (-40 * (1 - t)) + 'px)';
-      aviso.style.opacity = 1 - tramo(p, 0, .08);
+    var cabecera = function () {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
     };
 
-    // En celular los párrafos van debajo de la parte que se frena (no entran en la pantalla);
-    // el título queda arriba de la foto. En compu todo el texto va al lado de la bomba.
-    var parrafos = [].slice.call(texto.querySelectorAll('p:not(.eyebrow)'));
+    // En celular los párrafos van debajo (no entran en la pantalla); el título queda arriba de la foto
     var ubicarTexto = function () {
       if (celu.matches && !cajaCelu.parentNode) {
         parrafos.forEach(function (p) { cajaCelu.appendChild(p); });
@@ -138,42 +94,104 @@
       }
     };
 
+    // Agranda la bomba y la centra en la pantalla, tal como se va a ver cuando la página se frene
     var medir = function () {
       ubicarTexto();
-      var cabecera = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
-      var libre = window.innerHeight - cabecera;
+      if (estado === 'listo') { figura.style.transform = ''; return; }
+      var h = cabecera();
+      var libre = window.innerHeight - h;
       figura.style.transform = 'none';
-      var alto = pin.offsetHeight;
-      // En celular la parte que se frena queda centrada en la pantalla
-      pin.style.top = celu.matches ? cabecera + Math.max(0, (libre - alto) / 2) + 'px' : '';
-      // Cuánto hay que bajar para ver la animación completa (en celular, más corta)
-      despiece.style.height = alto + window.innerHeight * (celu.matches ? 2.6 : 4) + 'px';
-      // Posición final de la foto (sin transformar) y cuánto hay que agrandarla al comienzo
       var rp = pin.getBoundingClientRect();
       var rf = figura.getBoundingClientRect();
-      var topeFijo = celu.matches ? parseFloat(pin.style.top) : cabecera;
-      var centroFinalY = topeFijo + (rf.top - rp.top) + rf.height / 2;
+      posicion = Math.round(window.scrollY + rp.top - h);
+      var centroY = h + (rf.top - rp.top) + rf.height / 2;
       var escala = celu.matches
         ? Math.min(window.innerWidth * 1.35 / rf.width, libre * .7 / rf.height)
-        : Math.min(rp.width * .86 / rf.width, libre * .78 / rf.height, 2.6);
-      medida = {
-        alto: alto,
-        escala: Math.max(1, escala),
-        dx: window.innerWidth / 2 - (rf.left + rf.width / 2),
-        dy: cabecera + libre / 2 - centroFinalY
-      };
-      pintar();
+        : Math.min(rp.width * .86 / rf.width, libre * .8 / rf.height, 2.6);
+      escala = Math.max(1, escala);
+      var dx = window.innerWidth / 2 - (rf.left + rf.width / 2);
+      var dy = h + libre / 2 - centroY;
+      figura.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + escala + ')';
     };
 
-    var alBajar = function () {
-      if (!pendiente) { pendiente = true; window.requestAnimationFrame(pintar); }
+    // Mientras corre el video la página no se mueve
+    var frenar = function (e) { if (estado === 'reproduciendo') e.preventDefault(); };
+    var teclas = { 32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 38: 1, 40: 1 };
+    var frenarTeclas = function (e) { if (estado === 'reproduciendo' && teclas[e.keyCode]) e.preventDefault(); };
+    window.addEventListener('wheel', frenar, { passive: false });
+    window.addEventListener('touchmove', frenar, { passive: false });
+    window.addEventListener('keydown', frenarTeclas);
+
+    var terminar = function (animado) {
+      if (estado === 'listo') return;
+      estado = 'listo';
+      try { sessionStorage.setItem(CLAVE, '1'); } catch (e) {}
+      saltar.hidden = true;
+      if (!animado) despiece.classList.add('despiece--listo');
+      despiece.classList.add('despiece--fin');
+      void figura.offsetWidth; // aplica la transición antes de soltar el tamaño grande
+      figura.style.transform = '';
+      if (!video.paused) video.pause();
     };
+
+    var iniciar = function () {
+      estado = 'reproduciendo';
+      medir(); // se mide justo ahora: la página ya terminó de acomodarse (letras, fotos)
+      window.scrollTo({ top: posicion, behavior: 'instant' });
+      saltar.hidden = false;
+      var arranco = false;
+      video.addEventListener('playing', function () { arranco = true; }, { once: true });
+      video.addEventListener('ended', function () { setTimeout(function () { terminar(true); }, 200); }, { once: true });
+      video.preload = 'auto';
+      try { video.currentTime = 0; } catch (e) {}
+      var intento = video.play();
+      if (intento && intento.catch) intento.catch(function () { terminar(true); });
+      // si el video no arranca (conexión lenta, ahorro de batería), no se deja a nadie esperando
+      setTimeout(function () { if (!arranco) terminar(true); }, 2500);
+      setTimeout(function () { terminar(true); }, 9000);
+    };
+
+    var revisar = function () {
+      var y = window.scrollY;
+      var bajando = y > ultimoY;
+      ultimoY = y;
+      if (estado === 'reproduciendo') {
+        if (Math.abs(y - posicion) > 2) window.scrollTo({ top: posicion, behavior: 'instant' });
+        return;
+      }
+      if (estado !== 'espera') return;
+      var r = pin.getBoundingClientRect();
+      var h = cabecera();
+      if (Date.now() - saltoAncla < 1500 || r.bottom < h) { terminar(false); return; } // se la saltó con un enlace
+      if (bajando && r.top <= h + 2) iniciar();
+    };
+    window.addEventListener('scroll', revisar, { passive: true });
+    window.addEventListener('resize', medir);
+    saltar.addEventListener('click', function () { terminar(true); });
+    // Los enlaces del menú ("Productos", "Envíos"…) pasan de largo sin frenar la página
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (a && estado === 'espera') saltoAncla = Date.now();
+    });
+
+    // El video se descarga cuando la sección está por aparecer o al terminar de cargar la página
+    var precargar = function () { if (video.preload !== 'auto') { video.preload = 'auto'; video.load(); } };
+    if ('IntersectionObserver' in window) {
+      var vigia = new IntersectionObserver(function (e) {
+        if (e[0].isIntersecting) { precargar(); vigia.disconnect(); }
+      }, { rootMargin: '1500px 0px' });
+      vigia.observe(despiece);
+    }
+    if (document.readyState === 'complete') precargar();
+    else window.addEventListener('load', function () { setTimeout(precargar, 300); });
 
     despiece.classList.add('despiece--on');
     medir();
-    window.addEventListener('scroll', alBajar, { passive: true });
-    window.addEventListener('resize', medir);
-    if (!desarmada.complete) desarmada.addEventListener('load', medir);
+    // Las letras y las fotos pueden mover la página al terminar de cargar: se vuelve a medir
+    window.addEventListener('load', function () { if (estado === 'espera') medir(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (estado === 'espera') medir(); });
+    // Ya visto en esta pestaña, o la página abrió más abajo de la sección: queda desarmada
+    if (visto || pin.getBoundingClientRect().bottom < cabecera()) terminar(false);
   }
 
   // Aparición suave de secciones

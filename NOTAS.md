@@ -75,12 +75,18 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
   Para actualizar el código, el dueño lo pega en Cloudflare (Workers → refrimundo-precios → Edit code → Deploy).
 
 ## Animación de la bomba ("Quiénes somos" en la página principal)
-- Al bajar, la sección se frena: la bomba arranca armada y grande, se desarma, se achica a su lugar y aparece el texto.
-- El desarmado es un video de **Higgsfield** (FLUX 3 Video, 1080p, 5 s, 40 créditos, aprobado por el dueño) generado con
-  la foto armada como primer cuadro y la desarmada (`img/bomba-interior.webp`) como último. Original en `material/`.
-- La web no reproduce el video: usa 61 cuadros (`img/despiece/000.webp`…`060.webp`, 960×720, ~2 MB) que se dibujan
-  en un canvas según el scroll. Se cargan cuando la sección se acerca o al terminar de cargar la página.
+- La bomba espera armada y grande. Al llegar a la sección (bajando) la página se frena, se reproduce el video del
+  desarmado (5 s, botón "Saltar"), la bomba se achica a su lugar y aparece el texto; después se sigue bajando.
+- Una vez visto queda desarmada aunque se vuelva al inicio o se vaya al combo y se vuelva (sessionStorage);
+  al **refrescar** la página se repite. Si se pasa por encima con un enlace del menú, no frena.
+- Video: **Higgsfield** FLUX 3 Video, 1080p, 5 s, 40 créditos (aprobado por el dueño), primer cuadro = foto armada,
+  último = `img/bomba-interior.webp`. Original en `material/`; versión web `img/despiece.mp4` (1200×900, ~1 MB)
+  y primer cuadro `img/despiece-inicio.webp`.
 - Código en `js/main.js` (bloque "Despiece") y `css/styles.css`. Con "reducir movimiento" se ve la foto fija.
+
+## Navegación
+- Las tarjetas de productos del inicio llevan a su paso del combo: `combo.html#bombas`, `#manifolds`, `#vacuometros`.
+- Transición suave entre inicio y combo con View Transitions (`@view-transition` en `css/styles.css`).
 
 ## Pendientes (en orden)
 1. ✅ **Nota en bombas DVR** (hecho): misma foto (`img/bomba-vacio.webp`) para DVR 1A, 2A, 3A y 4A, con la nota

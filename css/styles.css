@@ -77,6 +77,22 @@ p { margin: 0 0 1em; }
 }
 .eyebrow--light { color: #9fbcf2; }
 
+/* ---------- Transición entre páginas (inicio ↔ Armá tu combo) ----------
+   Fundido suave con el encabezado quieto (Chrome, Edge, Safari 18.2+).
+   En navegadores sin esa función la página nueva igual entra con un fundido. */
+@view-transition { navigation: auto; }
+.header { view-transition-name: encabezado; }
+::view-transition-old(root) { animation: pagina-sale .25s ease both; }
+::view-transition-new(root) { animation: pagina-entra .4s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes pagina-sale { to { opacity: 0; transform: translateY(-10px); } }
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(14px); } }
+@supports not (view-transition-name: none) {
+  main { animation: pagina-entra .4s cubic-bezier(.2, .7, .2, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+
 /* ---------- Botones ---------- */
 .btn {
   display: inline-flex;
@@ -265,64 +281,67 @@ p { margin: 0 0 1em; }
 
 /* ---------- Despiece de la bomba (Nosotros) ----------
    Sin JavaScript o con "reducir movimiento" se ve como siempre: texto + bomba desarmada.
-   Con .despiece--on (lo pone main.js) la sección se frena en pantalla mientras se baja:
-   la bomba arranca armada y grande, se desarma (video de Higgsfield cortado en cuadros que se
-   dibujan en un canvas según el scroll) y se achica hasta su lugar al lado del texto. */
+   Con .despiece--on (lo pone main.js): la bomba espera armada y grande; al llegar a la sección
+   la página se frena, se reproduce el video del desarmado (Higgsfield) y con .despiece--fin
+   la bomba se achica a su lugar y aparece el texto. Después queda así (no se repite al volver). */
 .about__media { position: relative; }
-.despiece__video { display: none; }
-.despiece__hint { display: none; }
+.despiece__video, .despiece__saltar { display: none; }
+#nosotros { overflow-x: clip; }
 .despiece--on .despiece__pin {
-  position: sticky;
-  top: var(--header-h);
-  height: calc(100vh - var(--header-h));
-  height: calc(100svh - var(--header-h));
+  position: relative;
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100svh - var(--header-h));
   display: flex;
   align-items: center;
-  overflow: hidden;
 }
 .despiece--on .despiece__pin > .container { width: 100%; }
-.despiece--on .about__media {
-  transform-origin: center center;
-  will-change: transform;
-  z-index: 1;
-}
+.despiece--on .about__media { transform-origin: center center; z-index: 1; }
 .despiece--on .despiece__video {
   display: block;
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   z-index: 1;
   background: #eef1f4;
 }
-.despiece--on .about__text { will-change: opacity, transform; }
-.despiece--on .despiece__hint {
-  display: flex;
+.despiece--on .about__text { opacity: 0; transform: translateX(-40px); }
+/* Final: la bomba vuelve a su lugar, el video da paso a la foto y aparece el texto */
+.despiece--fin .about__media { transition: transform .9s cubic-bezier(.65, 0, .35, 1); }
+.despiece--fin .despiece__video { opacity: 0; transition: opacity .5s ease .5s; }
+.despiece--fin .about__text { opacity: 1; transform: none; transition: opacity .7s ease .45s, transform .7s ease .45s; }
+.despiece--listo .about__media, .despiece--listo .despiece__video, .despiece--listo .about__text { transition: none; }
+.despiece--on .despiece__saltar:not([hidden]) {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   position: absolute;
   left: 50%;
-  bottom: 22px;
-  z-index: 2;
-  margin: 0;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 3;
   padding: 8px 16px;
+  border: 0;
   border-radius: 999px;
   background: var(--white);
   box-shadow: var(--shadow);
   color: var(--navy);
   font: 600 .85rem var(--font-body);
-  transform: translateX(-50%);
-  white-space: nowrap;
+  cursor: pointer;
 }
-.despiece__hint span { display: inline-block; animation: despiece-flecha 1.4s ease-in-out infinite; }
-@keyframes despiece-flecha { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
-/* En celular: lo que se frena es el título + la foto (centrado en pantalla, main.js calcula "top");
-   los párrafos siguen debajo. La foto arranca más ancha que la pantalla: se recortan los costados. */
-#nosotros { overflow-x: clip; }
+.despiece__saltar:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 2px; }
+/* En celular: arriba queda el título + la foto; los párrafos siguen debajo (main.js los mueve).
+   La foto arranca más ancha que la pantalla: se recortan los costados. */
 @media (max-width: 900px) {
-  .despiece--on .despiece__pin { height: auto; overflow: visible; padding-block: 8px; }
+  .despiece--on .despiece__pin { min-height: 0; padding-block: 8px; }
+  .despiece--on .despiece__saltar:not([hidden]) { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
   .despiece--on .about { gap: 24px; }
-  .despiece--on .despiece__hint { bottom: -64px; }
+  .despiece--on + .despiece-texto-celu { opacity: 0; }
+  .despiece--fin + .despiece-texto-celu { opacity: 1; transition: opacity .6s ease .6s; }
+  .despiece--listo + .despiece-texto-celu { transition: none; }
+  .despiece--on .about__text { transform: translateY(16px); }
+  .despiece--fin .about__text { transform: none; }
   .despiece-texto-celu { margin-top: 24px; }
   .despiece-texto-celu p { color: var(--muted); font-size: 1.05rem; }
 }
