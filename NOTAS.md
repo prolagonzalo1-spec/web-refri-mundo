@@ -80,8 +80,9 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
 - Una vez visto queda desarmada aunque se vuelva al inicio o se vaya al combo y se vuelva (sessionStorage);
   al **refrescar** la página se repite. Si se pasa por encima con un enlace del menú, no frena.
 - Video: **Higgsfield** FLUX 3 Video, 1080p, 5 s, 40 créditos (aprobado por el dueño), primer cuadro = foto armada,
-  último = `img/bomba-interior.webp`. Original en `material/`; versión web `img/despiece.mp4` (1200×900, ~1 MB)
-  y primer cuadro `img/despiece-inicio.webp`.
+  último = `img/bomba-interior.webp`. Original en `material/`
+  y primer cuadro `img/despiece-inicio.webp`. **La web no usa el video**: el visor de claude.ai no lo reproducía, así que
+  se muestran 61 cuadros (`img/despiece/000-060.webp`, ~2 MB) que se dibujan solos en 5 s en un canvas con fundido.
 - Código en `js/main.js` (bloque "Despiece") y `css/styles.css`. Con "reducir movimiento" se ve la foto fija.
 
 ## Navegación

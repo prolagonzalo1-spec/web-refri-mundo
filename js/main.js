@@ -50,7 +50,7 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   // Despiece de la bomba en "Quiénes somos": la bomba espera armada y grande; al llegar a la
-  // sección la página se frena un momento, se reproduce el video del desarmado (Higgsfield),
+  // sección la página se frena un momento, se reproduce el video del desarmado (Higgsfield, en cuadros),
   // la bomba se achica a su lugar, aparece el texto y se puede seguir bajando.
   // Una vez visto queda desarmada (aunque se vuelva al inicio); al refrescar la página se repite.
   var despiece = document.getElementById('despiece');
@@ -59,7 +59,35 @@
     var pin = despiece.querySelector('.despiece__pin');
     var texto = despiece.querySelector('.about__text');
     var figura = despiece.querySelector('.about__media');
-    var video = despiece.querySelector('.despiece__video');
+    // El video del desarmado son 61 cuadros que se dibujan solos en 5 segundos en un canvas,
+    // con un fundido entre cuadro y cuadro (anda en cualquier navegador, sin depender del reproductor).
+    var lienzo = despiece.querySelector('.despiece__video');
+    var ctx = lienzo.getContext('2d');
+    var totalCuadros = +lienzo.getAttribute('data-cuadros');
+    var ruta = lienzo.getAttribute('data-ruta');
+    var DURACION = 5000;
+    var cuadros = [];
+    var listos = 0;
+    var cargarCuadro = function (i) {
+      if (cuadros[i]) return;
+      var im = new Image();
+      im.onload = function () { im.listo = true; listos++; if (i === 0 && estado !== 'reproduciendo') dibujar(0); };
+      im.src = ruta + ('00' + i).slice(-3) + '.webp';
+      cuadros[i] = im;
+    };
+    var dibujar = function (pos) {
+      var i = Math.floor(pos);
+      var a = pos - i;
+      if (!cuadros[i] || !cuadros[i].listo) return;
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cuadros[i], 0, 0, lienzo.width, lienzo.height);
+      var sig = cuadros[i + 1];
+      if (a > 0 && sig && sig.listo) {
+        ctx.globalAlpha = a;
+        ctx.drawImage(sig, 0, 0, lienzo.width, lienzo.height);
+        ctx.globalAlpha = 1;
+      }
+    };
     var saltar = despiece.querySelector('.despiece__saltar');
     var celu = window.matchMedia('(max-width: 900px)');
     var cajaCelu = document.createElement('div');
@@ -131,7 +159,18 @@
       despiece.classList.add('despiece--fin');
       void figura.offsetWidth; // aplica la transición antes de soltar el tamaño grande
       figura.style.transform = '';
-      if (!video.paused) video.pause();
+    };
+
+    var reproducir = function () {
+      var inicio = Date.now();
+      var paso = function () {
+        if (estado !== 'reproduciendo') return;
+        var t = Math.min(1, (Date.now() - inicio) / DURACION);
+        dibujar(t * (totalCuadros - 1));
+        if (t < 1) setTimeout(paso, 16); // ~60 cuadros por segundo
+        else setTimeout(function () { terminar(true); }, 250);
+      };
+      paso();
     };
 
     var iniciar = function () {
@@ -139,16 +178,17 @@
       medir(); // se mide justo ahora: la página ya terminó de acomodarse (letras, fotos)
       window.scrollTo({ top: posicion, behavior: 'instant' });
       saltar.hidden = false;
-      var arranco = false;
-      video.addEventListener('playing', function () { arranco = true; }, { once: true });
-      video.addEventListener('ended', function () { setTimeout(function () { terminar(true); }, 200); }, { once: true });
-      video.preload = 'auto';
-      try { video.currentTime = 0; } catch (e) {}
-      var intento = video.play();
-      if (intento && intento.catch) intento.catch(function () { terminar(true); });
-      // si el video no arranca (conexión lenta, ahorro de batería), no se deja a nadie esperando
-      setTimeout(function () { if (!arranco) terminar(true); }, 2500);
-      setTimeout(function () { terminar(true); }, 9000);
+      cargarTodos();
+      // Arranca cuando están todos los cuadros; si tardan (conexión lenta), no se deja a nadie esperando
+      var esperado = 0;
+      var esperar = function () {
+        if (estado !== 'reproduciendo') return;
+        if (listos >= totalCuadros) reproducir();
+        else if ((esperado += 100) >= 2500) terminar(true);
+        else setTimeout(esperar, 100);
+      };
+      esperar();
+      setTimeout(function () { terminar(true); }, DURACION + 4000);
     };
 
     var revisar = function () {
@@ -174,8 +214,10 @@
       if (a && estado === 'espera') saltoAncla = Date.now();
     });
 
-    // El video se descarga cuando la sección está por aparecer o al terminar de cargar la página
-    var precargar = function () { if (video.preload !== 'auto') { video.preload = 'auto'; video.load(); } };
+    // Los cuadros se descargan cuando la sección está por aparecer o al terminar de cargar la página
+    var cargarTodos = function () { for (var k = 0; k < totalCuadros; k++) cargarCuadro(k); };
+    var precargar = cargarTodos;
+    cargarCuadro(0);
     if ('IntersectionObserver' in window) {
       var vigia = new IntersectionObserver(function (e) {
         if (e[0].isIntersecting) { precargar(); vigia.disconnect(); }
