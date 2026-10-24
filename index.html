@@ -99,6 +99,9 @@
             <a class="btn btn--ml" href="https://www.mercadolibre.com.ar/pagina/refrimundo" target="_blank" rel="noopener">
               <svg class="icon" aria-hidden="true"><use href="#i-bag"/></svg> Tienda en Mercado Libre
             </a>
+            <a class="btn btn--combo" href="combo.html">
+              <svg class="icon" aria-hidden="true"><use href="#i-combo"/></svg> Armá tu combo
+            </a>
             <a class="btn btn--ghost" href="#productos">Ver productos</a>
           </div>
         </div>
@@ -134,6 +137,9 @@
 
     <!-- ===== Nosotros ===== -->
     <section class="section" id="nosotros">
+      <!-- Despiece: al bajar, la bomba armada se desarma y se acomoda al lado del texto (js/main.js) -->
+      <div class="despiece" id="despiece">
+      <div class="despiece__pin">
       <div class="container about">
         <div class="about__text">
           <p class="eyebrow">Quiénes somos</p>
@@ -142,8 +148,12 @@
           <p>Sabemos que una herramienta que falla es un trabajo que se frena. Por eso elegimos productos confiables, respetamos la garantía de fábrica y acompañamos a cada cliente para que su equipo rinda como tiene que rendir.</p>
         </div>
         <figure class="about__media">
-          <img src="img/bomba-interior.webp" alt="Vista interior ilustrativa de una bomba de vacío Dosivac DVR II" width="1000" height="750" loading="lazy">
+          <canvas class="despiece__video" width="960" height="720" aria-hidden="true" data-cuadros="61" data-ruta="img/despiece/"></canvas>
+          <img class="despiece__desarmada" src="img/bomba-interior.webp" alt="Vista interior ilustrativa de una bomba de vacío Dosivac DVR II" width="1000" height="750">
         </figure>
+      </div>
+      <button type="button" class="despiece__saltar" hidden>Saltar <span aria-hidden="true">›</span></button>
+      </div>
       </div>
 
       <div class="container">
@@ -192,28 +202,28 @@
         </div>
 
         <div class="products">
-          <a class="product" href="https://wa.me/c/5491125291029" target="_blank" rel="noopener" aria-label="Ver modelos de bombas de vacío en WhatsApp">
+          <a class="product" href="combo.html#bombas" aria-label="Ver bombas de vacío en Armá tu combo">
             <div class="product__img"><img src="img/bomba-vacio.webp" alt="Bomba de vacío Dosivac DVR II" width="900" height="945" loading="lazy"></div>
             <div class="product__body">
               <h3>Bombas de vacío</h3>
               <p>Vacío profundo y confiable para instalar y reparar equipos de aire acondicionado y refrigeración.</p>
-              <span class="product__cta">Ver modelos →</span>
+              <span class="product__cta">Ver modelos y precios →</span>
             </div>
           </a>
-          <a class="product" href="https://wa.me/p/37824734770444972/5491125291029" target="_blank" rel="noopener" aria-label="Ver Vacuómetros digitales en WhatsApp">
+          <a class="product" href="combo.html#vacuometros" aria-label="Ver vacuómetros digitales en Armá tu combo">
             <div class="product__img"><img src="img/vacuometro.webp" alt="Vacuómetro digital Dosivac con estuche" width="900" height="945" loading="lazy"></div>
             <div class="product__body">
               <h3>Vacuómetros digitales</h3>
               <p>Medición precisa en micrones para saber exactamente cuándo el sistema está listo.</p>
-              <span class="product__cta">Ver producto →</span>
+              <span class="product__cta">Ver modelos y precios →</span>
             </div>
           </a>
-          <a class="product" href="https://wa.me/p/29214716521446250/5491125291029" target="_blank" rel="noopener" aria-label="Ver Manifolds en WhatsApp">
+          <a class="product" href="combo.html#manifolds" aria-label="Ver manifolds en Armá tu combo">
             <div class="product__img"><img src="img/manifold-digital.webp" alt="Manifold digital Dosivac DVR con conexión WiFi, mangueras y pinzas" width="900" height="945" loading="lazy"></div>
             <div class="product__body">
               <h3>Manifolds</h3>
               <p>Manifolds analógicos y digitales, con conexión WiFi, mangueras y pinzas de temperatura.</p>
-              <span class="product__cta">Ver producto →</span>
+              <span class="product__cta">Ver modelos y precios →</span>
             </div>
           </a>
           <article class="product product--more">
@@ -225,6 +235,21 @@
               </a>
             </div>
           </article>
+          <a class="product product--combo" href="combo.html">
+            <div class="combo-promo__text">
+              <p class="eyebrow">Nuevo</p>
+              <h3>Armá tu combo</h3>
+              <p>Elegí bomba, manifold, vacuómetro, manguera y aceite en un solo lugar. Ves el total al instante, con envío gratis a todo el país, y nos mandás el pedido por WhatsApp.</p>
+              <span class="btn btn--wa combo-promo__btn"><svg class="icon" aria-hidden="true"><use href="#i-combo"/></svg> Armá tu combo</span>
+            </div>
+            <ul class="combo-promo__steps" aria-hidden="true">
+              <li><span><svg><use href="#cat-bombas"/></svg></span>Bombas</li>
+              <li><span><svg><use href="#cat-manifolds"/></svg></span>Manifolds</li>
+              <li><span><svg><use href="#cat-vacuometros"/></svg></span>Vacuómetros</li>
+              <li><span><svg><use href="#cat-mangueras"/></svg></span>Mangueras</li>
+              <li><span><svg><use href="#cat-aceites"/></svg></span>Aceites</li>
+            </ul>
+          </a>
         </div>
       </div>
     </section>
@@ -333,6 +358,12 @@
     <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="11" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
     <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
     <symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 13.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></symbol>
+    <symbol id="i-combo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 8.5 4.25L12 11 3.5 6.75z"/><path d="m3.5 11.5 8.5 4.25 8.5-4.25"/><path d="m3.5 16.25 8.5 4.25 8.5-4.25"/></symbol>
+    <symbol id="cat-bombas" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V4.5h7.5V10"/><rect x="3" y="9" width="8.5" height="9" rx="1.6"/><circle cx="7.25" cy="13.5" r="1.9"/><path d="M11.5 10.5h6.5a3 3 0 0 1 0 6h-6.5"/><path d="M14.5 10.5v6M17 10.5v6M3.5 20.5h17"/></symbol>
+    <symbol id="cat-manifolds" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="8" r="3.8"/><circle cx="16.5" cy="8" r="3.8"/><path d="M7.5 8 5.7 6.4M16.5 8l-1.8-1.6M7.5 11.8V14M16.5 11.8V14"/><rect x="3.5" y="14" width="17" height="4" rx="1.2"/><path d="M8 18v2.5M12 18v2.5M16 18v2.5"/></symbol>
+    <symbol id="cat-vacuometros" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="15.5" rx="2.5"/><rect x="8.5" y="5" width="7" height="5" rx=".8"/><path d="M9.5 13.5h.01M14.5 13.5h.01M12 18v2.5M10 21h4"/></symbol>
+    <symbol id="cat-mangueras" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="6.5"/><circle cx="12" cy="10" r="3.2"/><path d="M8 15.2c-.8 2.5-2.4 4-4.6 4.6M16 15.2c.8 2.5 2.4 4 4.6 4.6"/><path d="M2.6 18.4l.9 2.6M21.4 18.4l-.9 2.6"/></symbol>
+    <symbol id="cat-aceites" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9.5" y="2.5" width="5" height="2.5" rx=".6"/><path d="M8.5 7h6l3.5 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 19.5V9.5z"/><rect x="8.5" y="12" width="7" height="6" rx=".6"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/></symbol>
   </svg>
 

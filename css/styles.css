@@ -77,6 +77,22 @@ p { margin: 0 0 1em; }
 }
 .eyebrow--light { color: #9fbcf2; }
 
+/* ---------- Transición entre páginas (inicio ↔ Armá tu combo) ----------
+   Fundido suave con el encabezado quieto (Chrome, Edge, Safari 18.2+).
+   En navegadores sin esa función la página nueva igual entra con un fundido. */
+@view-transition { navigation: auto; }
+.header { view-transition-name: encabezado; }
+::view-transition-old(root) { animation: pagina-sale .25s ease both; }
+::view-transition-new(root) { animation: pagina-entra .4s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes pagina-sale { to { opacity: 0; transform: translateY(-10px); } }
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(14px); } }
+@supports not (view-transition-name: none) {
+  main { animation: pagina-entra .4s cubic-bezier(.2, .7, .2, 1) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+
 /* ---------- Botones ---------- */
 .btn {
   display: inline-flex;
@@ -105,6 +121,9 @@ p { margin: 0 0 1em; }
 .btn--ghost { border-color: rgba(255, 255, 255, .45); color: var(--white); }
 .btn--ghost:hover { background: rgba(255, 255, 255, .1); border-color: var(--white); }
 .btn--sm { padding: .6em 1.1em; font-size: .88rem; }
+/* Armá tu combo (portada): blanco para que se destaque sobre el azul */
+.btn--combo { background: var(--white); color: var(--navy); box-shadow: 0 8px 20px rgba(0, 0, 0, .18); }
+.btn--combo:hover { background: var(--ice); }
 .btn--lg { padding: 1em 1.9em; font-size: 1.05rem; }
 
 /* ---------- Encabezado ---------- */
@@ -194,7 +213,13 @@ p { margin: 0 0 1em; }
 .hero h1 { color: var(--white); }
 .hero__lead { font-size: 1.1rem; color: #d3def5; max-width: 34em; }
 .hero__lead strong { color: var(--white); }
-.hero__actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
+.hero__actions {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 12px;
+  margin-top: 28px;
+}
+.hero__actions .btn { padding-inline: 1.2em; }
 .hero__media img {
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -253,6 +278,73 @@ p { margin: 0 0 1em; }
   box-shadow: var(--shadow);
 }
 .about__media img { width: 100%; height: auto; }
+
+/* ---------- Despiece de la bomba (Nosotros) ----------
+   Sin JavaScript o con "reducir movimiento" se ve como siempre: texto + bomba desarmada.
+   Con .despiece--on (lo pone main.js): la bomba espera armada y grande; al llegar a la sección
+   la página se frena, se reproduce el video del desarmado (Higgsfield) y con .despiece--fin
+   la bomba se achica a su lugar y aparece el texto. Después queda así (no se repite al volver). */
+.about__media { position: relative; }
+.despiece__video, .despiece__saltar { display: none; }
+#nosotros { overflow-x: clip; }
+.despiece--on .despiece__pin {
+  position: relative;
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100svh - var(--header-h));
+  display: flex;
+  align-items: center;
+}
+.despiece--on .despiece__pin > .container { width: 100%; }
+.despiece--on .about__media { transform-origin: center center; z-index: 1; }
+.despiece--on .despiece__video {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  background: #eef1f4;
+}
+.despiece--on .about__text { opacity: 0; transform: translateX(-40px); }
+/* Final: la bomba vuelve a su lugar, el video da paso a la foto y aparece el texto */
+.despiece--fin .about__media { transition: transform .9s cubic-bezier(.65, 0, .35, 1); }
+.despiece--fin .despiece__video { opacity: 0; transition: opacity .5s ease .5s; }
+.despiece--fin .about__text { opacity: 1; transform: none; transition: opacity .7s ease .45s, transform .7s ease .45s; }
+.despiece--listo .about__media, .despiece--listo .despiece__video, .despiece--listo .about__text { transition: none; }
+.despiece--on .despiece__saltar:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  color: var(--navy);
+  font: 600 .85rem var(--font-body);
+  cursor: pointer;
+}
+.despiece__saltar:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 2px; }
+/* En celular: arriba queda el título + la foto; los párrafos siguen debajo (main.js los mueve).
+   La foto arranca más ancha que la pantalla: se recortan los costados. */
+@media (max-width: 900px) {
+  .despiece--on .despiece__pin { min-height: 0; padding-block: 8px; }
+  .despiece--on .despiece__saltar:not([hidden]) { position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+  .despiece--on .about { gap: 24px; }
+  .despiece--on + .despiece-texto-celu { opacity: 0; }
+  .despiece--fin + .despiece-texto-celu { opacity: 1; transition: opacity .6s ease .6s; }
+  .despiece--listo + .despiece-texto-celu { transition: none; }
+  .despiece--on .about__text { transform: translateY(16px); }
+  .despiece--fin .about__text { transform: none; }
+  .despiece-texto-celu { margin-top: 24px; }
+  .despiece-texto-celu p { color: var(--muted); font-size: 1.05rem; }
+}
 
 .values {
   display: grid;
@@ -328,6 +420,65 @@ a.product:hover .product__cta { text-decoration: underline; text-underline-offse
 .product--more .product__body { padding: 36px 30px; }
 .product--more h3 { color: var(--white); font-size: 1.35rem; }
 .product--more p { color: #d9e4fb; margin-bottom: 22px; }
+
+/* Tarjeta ancha "Armá tu combo" debajo de los productos */
+.product--combo {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px 36px;
+  border: 2px solid var(--ice-200);
+}
+.product--combo:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 3px; }
+.combo-promo__text { max-width: 34em; }
+.combo-promo__text .eyebrow { margin-bottom: 6px; }
+.combo-promo__text h3 { font-size: 1.5rem; margin-bottom: 8px; }
+.combo-promo__text p { color: var(--muted); font-size: .96rem; margin: 0 0 18px; }
+.product--combo:hover .combo-promo__btn { background: var(--wa-600); }
+.combo-promo__steps {
+  flex: none;
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  position: relative;
+}
+/* línea que une los círculos, como en los pasos del combo */
+.combo-promo__steps::before {
+  content: "";
+  position: absolute;
+  top: 27px; left: 28px; right: 28px;
+  height: 2px;
+  background: var(--ice-200);
+}
+.combo-promo__steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 64px;
+  font: 600 .74rem var(--font-body);
+  color: var(--navy);
+}
+.combo-promo__steps span {
+  display: grid;
+  place-items: center;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--ice);
+  color: var(--royal);
+  transition: background-color .25s, color .25s, transform .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+.combo-promo__steps svg { width: 26px; height: 26px; }
+.product--combo:hover .combo-promo__steps span { background: var(--royal); color: var(--white); }
+.product--combo:hover .combo-promo__steps li:nth-child(2) span { transition-delay: .05s; }
+.product--combo:hover .combo-promo__steps li:nth-child(3) span { transition-delay: .1s; }
+.product--combo:hover .combo-promo__steps li:nth-child(4) span { transition-delay: .15s; }
+.product--combo:hover .combo-promo__steps li:nth-child(5) span { transition-delay: .2s; }
 
 /* ---------- Envíos ---------- */
 .shipping {
@@ -472,6 +623,7 @@ a.product:hover .product__cta { text-decoration: underline; text-underline-offse
    ========================================================= */
 @media (max-width: 1080px) {
   .products { grid-template-columns: repeat(2, 1fr); }
+  .product--combo { flex-direction: column; align-items: flex-start; }
   .trust__grid { grid-template-columns: repeat(2, 1fr); }
   .trust__item:nth-child(3) { border-left: 0; }
   .trust__item:nth-child(n+3) { border-top: 1px solid var(--line); }
@@ -514,12 +666,20 @@ a.product:hover .product__cta { text-decoration: underline; text-underline-offse
 @media (max-width: 560px) {
   .container { padding-left: 16px; padding-right: 16px; }
   .header__cta { padding: .55em .9em; }
+  .hero__actions { grid-template-columns: 1fr; }
   .hero__actions .btn { width: 100%; }
   .trust__grid { grid-template-columns: 1fr; }
   .trust__item + .trust__item { border-left: 0; border-top: 1px solid var(--line); }
   .trust__item { padding: 18px 20px; }
   .values { grid-template-columns: 1fr; }
   .products { grid-template-columns: 1fr; }
+  .product--combo { padding: 26px 20px; gap: 22px; }
+  .combo-promo__steps { gap: 4px; width: 100%; justify-content: space-between; }
+  .combo-promo__steps li { width: auto; flex: 1; font-size: .66rem; }
+  .combo-promo__steps span { width: 44px; height: 44px; }
+  .combo-promo__steps svg { width: 22px; height: 22px; }
+  .combo-promo__steps::before { top: 21px; left: 10%; right: 10%; }
+  .combo-promo__btn { width: 100%; }
   .shipping__gallery { grid-template-rows: 180px 200px; }
   .contact__main, .contact__hours { padding: 32px 22px; }
   .contact__main .btn { width: 100%; }

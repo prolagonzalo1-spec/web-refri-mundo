@@ -49,9 +49,198 @@
   // Año actual en el pie
   document.getElementById('year').textContent = new Date().getFullYear();
 
+  // Despiece de la bomba en "Quiénes somos": la bomba espera armada y grande; al llegar a la
+  // sección la página se frena un momento, se reproduce el video del desarmado (Higgsfield, en cuadros),
+  // la bomba se achica a su lugar, aparece el texto y se puede seguir bajando.
+  // Una vez visto queda desarmada (aunque se vuelva al inicio); al refrescar la página se repite.
+  var despiece = document.getElementById('despiece');
+  var sinMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (despiece && !sinMovimiento) {
+    var pin = despiece.querySelector('.despiece__pin');
+    var texto = despiece.querySelector('.about__text');
+    var figura = despiece.querySelector('.about__media');
+    // El video del desarmado son 61 cuadros que se dibujan solos en 2,5 segundos en un canvas,
+    // con un fundido entre cuadro y cuadro (anda en cualquier navegador, sin depender del reproductor).
+    var lienzo = despiece.querySelector('.despiece__video');
+    var ctx = lienzo.getContext('2d');
+    var totalCuadros = +lienzo.getAttribute('data-cuadros');
+    var ruta = lienzo.getAttribute('data-ruta');
+    var DURACION = 2500;
+    var cuadros = [];
+    var listos = 0;
+    var cargarCuadro = function (i) {
+      if (cuadros[i]) return;
+      var im = new Image();
+      im.onload = function () { im.listo = true; listos++; if (i === 0 && estado !== 'reproduciendo') dibujar(0); };
+      im.src = ruta + ('00' + i).slice(-3) + '.webp';
+      cuadros[i] = im;
+    };
+    var dibujar = function (pos) {
+      var i = Math.floor(pos);
+      var a = pos - i;
+      if (!cuadros[i] || !cuadros[i].listo) return;
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cuadros[i], 0, 0, lienzo.width, lienzo.height);
+      var sig = cuadros[i + 1];
+      if (a > 0 && sig && sig.listo) {
+        ctx.globalAlpha = a;
+        ctx.drawImage(sig, 0, 0, lienzo.width, lienzo.height);
+        ctx.globalAlpha = 1;
+      }
+    };
+    var saltar = despiece.querySelector('.despiece__saltar');
+    var celu = window.matchMedia('(max-width: 900px)');
+    var cajaCelu = document.createElement('div');
+    cajaCelu.className = 'container despiece-texto-celu';
+    var parrafos = [].slice.call(texto.querySelectorAll('p:not(.eyebrow)'));
+    var CLAVE = 'rm-despiece-visto';
+    var estado = 'espera'; // espera → reproduciendo → listo
+    var posicion = 0;      // dónde queda frenada la página mientras corre el video
+    var ultimoY = window.scrollY;
+    var saltoAncla = 0;
+
+    // ¿Ya se vio en esta pestaña? Si la página se refrescó, se vuelve a mostrar.
+    var visto = false;
+    try {
+      var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+      if (nav && nav.type === 'reload') sessionStorage.removeItem(CLAVE);
+      visto = sessionStorage.getItem(CLAVE) === '1';
+    } catch (e) {}
+
+    var cabecera = function () {
+      return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 72;
+    };
+
+    // En celular los párrafos van debajo (no entran en la pantalla); el título queda arriba de la foto
+    var ubicarTexto = function () {
+      if (celu.matches && !cajaCelu.parentNode) {
+        parrafos.forEach(function (p) { cajaCelu.appendChild(p); });
+        despiece.parentNode.insertBefore(cajaCelu, despiece.nextSibling);
+      } else if (!celu.matches && cajaCelu.parentNode) {
+        parrafos.forEach(function (p) { texto.appendChild(p); });
+        cajaCelu.parentNode.removeChild(cajaCelu);
+      }
+    };
+
+    // Agranda la bomba y la centra en la pantalla, tal como se va a ver cuando la página se frene
+    var medir = function () {
+      ubicarTexto();
+      if (estado === 'listo') { figura.style.transform = ''; return; }
+      var h = cabecera();
+      var libre = window.innerHeight - h;
+      figura.style.transform = 'none';
+      var rp = pin.getBoundingClientRect();
+      var rf = figura.getBoundingClientRect();
+      posicion = Math.round(window.scrollY + rp.top - h);
+      var centroY = h + (rf.top - rp.top) + rf.height / 2;
+      var escala = celu.matches
+        ? Math.min(window.innerWidth * 1.35 / rf.width, libre * .7 / rf.height)
+        : Math.min(rp.width * .86 / rf.width, libre * .8 / rf.height, 2.6);
+      escala = Math.max(1, escala);
+      var dx = window.innerWidth / 2 - (rf.left + rf.width / 2);
+      var dy = h + libre / 2 - centroY;
+      figura.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + escala + ')';
+    };
+
+    // Mientras corre el video la página no se mueve
+    var frenar = function (e) { if (estado === 'reproduciendo') e.preventDefault(); };
+    var teclas = { 32: 1, 33: 1, 34: 1, 35: 1, 36: 1, 38: 1, 40: 1 };
+    var frenarTeclas = function (e) { if (estado === 'reproduciendo' && teclas[e.keyCode]) e.preventDefault(); };
+    window.addEventListener('wheel', frenar, { passive: false });
+    window.addEventListener('touchmove', frenar, { passive: false });
+    window.addEventListener('keydown', frenarTeclas);
+
+    var terminar = function (animado) {
+      if (estado === 'listo') return;
+      estado = 'listo';
+      try { sessionStorage.setItem(CLAVE, '1'); } catch (e) {}
+      saltar.hidden = true;
+      if (!animado) despiece.classList.add('despiece--listo');
+      despiece.classList.add('despiece--fin');
+      void figura.offsetWidth; // aplica la transición antes de soltar el tamaño grande
+      figura.style.transform = '';
+    };
+
+    var reproducir = function () {
+      var inicio = Date.now();
+      var paso = function () {
+        if (estado !== 'reproduciendo') return;
+        var t = Math.min(1, (Date.now() - inicio) / DURACION);
+        dibujar(t * (totalCuadros - 1));
+        if (t < 1) setTimeout(paso, 16); // ~60 cuadros por segundo
+        else setTimeout(function () { terminar(true); }, 250);
+      };
+      paso();
+    };
+
+    var iniciar = function () {
+      estado = 'reproduciendo';
+      medir(); // se mide justo ahora: la página ya terminó de acomodarse (letras, fotos)
+      window.scrollTo({ top: posicion, behavior: 'instant' });
+      saltar.hidden = false;
+      cargarTodos();
+      // Arranca cuando están todos los cuadros; si tardan (conexión lenta), no se deja a nadie esperando
+      var esperado = 0;
+      var esperar = function () {
+        if (estado !== 'reproduciendo') return;
+        if (listos >= totalCuadros) reproducir();
+        else if ((esperado += 100) >= 2500) terminar(true);
+        else setTimeout(esperar, 100);
+      };
+      esperar();
+      setTimeout(function () { terminar(true); }, DURACION + 4000);
+    };
+
+    var revisar = function () {
+      var y = window.scrollY;
+      var bajando = y > ultimoY;
+      ultimoY = y;
+      if (estado === 'reproduciendo') {
+        if (Math.abs(y - posicion) > 2) window.scrollTo({ top: posicion, behavior: 'instant' });
+        return;
+      }
+      if (estado !== 'espera') return;
+      var r = pin.getBoundingClientRect();
+      var h = cabecera();
+      if (Date.now() - saltoAncla < 1500 || r.bottom < h) { terminar(false); return; } // se la saltó con un enlace
+      if (bajando && r.top <= h + 2) iniciar();
+    };
+    window.addEventListener('scroll', revisar, { passive: true });
+    window.addEventListener('resize', medir);
+    saltar.addEventListener('click', function () { terminar(true); });
+    // Los enlaces del menú ("Productos", "Envíos"…) pasan de largo sin frenar la página
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest && e.target.closest('a[href^="#"]');
+      if (a && estado === 'espera') saltoAncla = Date.now();
+    });
+
+    // Los cuadros se descargan cuando la sección está por aparecer o al terminar de cargar la página
+    var cargarTodos = function () { for (var k = 0; k < totalCuadros; k++) cargarCuadro(k); };
+    var precargar = cargarTodos;
+    cargarCuadro(0);
+    if ('IntersectionObserver' in window) {
+      var vigia = new IntersectionObserver(function (e) {
+        if (e[0].isIntersecting) { precargar(); vigia.disconnect(); }
+      }, { rootMargin: '1500px 0px' });
+      vigia.observe(despiece);
+    }
+    if (document.readyState === 'complete') precargar();
+    else window.addEventListener('load', function () { setTimeout(precargar, 300); });
+
+    despiece.classList.add('despiece--on');
+    medir();
+    // Las letras y las fotos pueden mover la página al terminar de cargar: se vuelve a medir
+    window.addEventListener('load', function () { if (estado === 'espera') medir(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (estado === 'espera') medir(); });
+    // Ya visto en esta pestaña, o la página abrió más abajo de la sección: queda desarmada
+    if (visto || pin.getBoundingClientRect().bottom < cabecera()) terminar(false);
+  }
+
   // Aparición suave de secciones
   if ('IntersectionObserver' in window) {
-    var items = document.querySelectorAll('.section__head, .about__text, .about__media, .value, .product, .shipping__text, .shipping__gallery, .step, .contact');
+    var items = [].filter.call(document.querySelectorAll('.section__head, .about__text, .about__media, .value, .product, .shipping__text, .shipping__gallery, .step, .contact'), function (el) {
+      return !el.closest('.despiece--on'); // la bomba y su texto ya tienen su propia animación
+    });
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
