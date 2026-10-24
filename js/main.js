@@ -59,13 +59,13 @@
     var pin = despiece.querySelector('.despiece__pin');
     var texto = despiece.querySelector('.about__text');
     var figura = despiece.querySelector('.about__media');
-    // El video del desarmado son 61 cuadros que se dibujan solos en 3,5 segundos en un canvas,
+    // El video del desarmado son 61 cuadros que se dibujan solos en 2,5 segundos en un canvas,
     // con un fundido entre cuadro y cuadro (anda en cualquier navegador, sin depender del reproductor).
     var lienzo = despiece.querySelector('.despiece__video');
     var ctx = lienzo.getContext('2d');
     var totalCuadros = +lienzo.getAttribute('data-cuadros');
     var ruta = lienzo.getAttribute('data-ruta');
-    var DURACION = 3500;
+    var DURACION = 2500;
     var cuadros = [];
     var listos = 0;
     var cargarCuadro = function (i) {
