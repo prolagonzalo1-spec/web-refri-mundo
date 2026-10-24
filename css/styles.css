@@ -266,9 +266,10 @@ p { margin: 0 0 1em; }
 /* ---------- Despiece de la bomba (Nosotros) ----------
    Sin JavaScript o con "reducir movimiento" se ve como siempre: texto + bomba desarmada.
    Con .despiece--on (lo pone main.js) la sección se frena en pantalla mientras se baja:
-   la bomba arranca armada y grande, se desarma y se achica hasta su lugar al lado del texto. */
+   la bomba arranca armada y grande, se desarma (video de Higgsfield cortado en cuadros que se
+   dibujan en un canvas según el scroll) y se achica hasta su lugar al lado del texto. */
 .about__media { position: relative; }
-.despiece__armada { display: none; }
+.despiece__video { display: none; }
 .despiece__hint { display: none; }
 .despiece--on .despiece__pin {
   position: sticky;
@@ -285,16 +286,14 @@ p { margin: 0 0 1em; }
   will-change: transform;
   z-index: 1;
 }
-.despiece--on .despiece__armada,
-.despiece--on .despiece__desarmada { will-change: opacity, transform; }
-.despiece--on .despiece__armada {
+.despiece--on .despiece__video {
   display: block;
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   z-index: 1;
+  background: #eef1f4;
 }
 .despiece--on .about__text { will-change: opacity, transform; }
 .despiece--on .despiece__hint {

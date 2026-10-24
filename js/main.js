@@ -50,7 +50,8 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   // Despiece de la bomba en "Quiénes somos": la sección se frena mientras se baja,
-  // la bomba armada (grande) se desarma, se achica hasta su lugar y aparece el texto.
+  // la bomba armada (grande) se desarma (video de Higgsfield en cuadros), se achica
+  // hasta su lugar y aparece el texto.
   var despiece = document.getElementById('despiece');
   var sinMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (despiece && !sinMovimiento && window.requestAnimationFrame) {
@@ -58,8 +59,42 @@
     var grilla = despiece.querySelector('.about');
     var texto = despiece.querySelector('.about__text');
     var figura = despiece.querySelector('.about__media');
-    var armada = despiece.querySelector('.despiece__armada');
+    var lienzo = despiece.querySelector('.despiece__video');
+    var ctx = lienzo.getContext('2d');
     var desarmada = despiece.querySelector('.despiece__desarmada');
+    // Cuadros del video (img/despiece/000.webp ... 060.webp): el primero se carga ya,
+    // el resto cuando la sección está por aparecer, para no frenar la entrada a la página.
+    var totalCuadros = +lienzo.getAttribute('data-cuadros');
+    var ruta = lienzo.getAttribute('data-ruta');
+    var cuadros = [];
+    var cuadroActual = -1;
+    var cargarCuadro = function (i) {
+      if (cuadros[i]) return;
+      var im = new Image();
+      im.decoding = 'async';
+      im.onload = function () { im.listo = true; if (i === 0 || i === cuadroActual) dibujar(cuadroActual < 0 ? 0 : cuadroActual, true); };
+      im.src = ruta + ('00' + i).slice(-3) + '.webp';
+      cuadros[i] = im;
+    };
+    var dibujar = function (i, forzar) {
+      if (i === cuadroActual && !forzar) return;
+      cuadroActual = i;
+      // si ese cuadro todavía no llegó, se muestra el más cercano anterior que ya esté
+      for (var j = i; j >= 0; j--) {
+        if (cuadros[j] && cuadros[j].listo) { ctx.drawImage(cuadros[j], 0, 0, lienzo.width, lienzo.height); return; }
+      }
+    };
+    cargarCuadro(0);
+    var cargarTodos = function () { for (var k = 1; k < totalCuadros; k++) cargarCuadro(k); };
+    // Se cargan cuando la sección se acerca o, como muy tarde, cuando terminó de cargar la página
+    if ('IntersectionObserver' in window) {
+      var vigia = new IntersectionObserver(function (e) {
+        if (e[0].isIntersecting) { cargarTodos(); vigia.disconnect(); }
+      }, { rootMargin: '1500px 0px' });
+      vigia.observe(despiece);
+    }
+    if (document.readyState === 'complete') cargarTodos();
+    else window.addEventListener('load', function () { setTimeout(cargarTodos, 300); });
     var aviso = despiece.querySelector('.despiece__hint');
     var celu = window.matchMedia('(max-width: 900px)');
     var cajaCelu = document.createElement('div');
@@ -76,12 +111,9 @@
       var bajado = pin.getBoundingClientRect().top - despiece.getBoundingClientRect().top;
       var p = recorrido > 0 ? Math.min(1, Math.max(0, bajado / recorrido)) : 1;
       var esCelu = celu.matches;
-      // 1) se desarma: la armada se va y aparece la desarmada
-      var d = suave(tramo(p, .1, esCelu ? .5 : .48));
-      armada.style.opacity = 1 - d;
-      armada.style.transform = 'scale(' + (1 - .1 * d) + ')';
-      desarmada.style.opacity = d;
-      desarmada.style.transform = 'scale(' + (1.08 - .08 * d) + ')';
+      // 1) se desarma: avanza el video cuadro por cuadro al ritmo del scroll
+      var d = tramo(p, .06, esCelu ? .52 : .5);
+      dibujar(Math.round(d * (totalCuadros - 1)));
       // 2) se achica y vuelve a su lugar
       var a = suave(tramo(p, esCelu ? .55 : .52, esCelu ? 1 : .82));
       var s = medida.escala + (1 - medida.escala) * a;

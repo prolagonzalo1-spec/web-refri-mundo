@@ -74,6 +74,14 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
   muestra. Nunca expone costos ni otras hojas. Cache de 5 minutos. Diagnóstico con `?debug=1`.
   Para actualizar el código, el dueño lo pega en Cloudflare (Workers → refrimundo-precios → Edit code → Deploy).
 
+## Animación de la bomba ("Quiénes somos" en la página principal)
+- Al bajar, la sección se frena: la bomba arranca armada y grande, se desarma, se achica a su lugar y aparece el texto.
+- El desarmado es un video de **Higgsfield** (FLUX 3 Video, 1080p, 5 s, 40 créditos, aprobado por el dueño) generado con
+  la foto armada como primer cuadro y la desarmada (`img/bomba-interior.webp`) como último. Original en `material/`.
+- La web no reproduce el video: usa 61 cuadros (`img/despiece/000.webp`…`060.webp`, 960×720, ~2 MB) que se dibujan
+  en un canvas según el scroll. Se cargan cuando la sección se acerca o al terminar de cargar la página.
+- Código en `js/main.js` (bloque "Despiece") y `css/styles.css`. Con "reducir movimiento" se ve la foto fija.
+
 ## Pendientes (en orden)
 1. ✅ **Nota en bombas DVR** (hecho): misma foto (`img/bomba-vacio.webp`) para DVR 1A, 2A, 3A y 4A, con la nota
    "Imagen ilustrativa de la línea DVR. Cambia la capacidad." En el Excel la 4A está mal escrita como "DVP 4A":
