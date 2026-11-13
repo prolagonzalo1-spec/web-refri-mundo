@@ -197,7 +197,56 @@
   transition: border-color .2s, box-shadow .2s;
 }
 .pcard.is-selected { border-color: var(--wa); box-shadow: 0 10px 30px rgba(31, 174, 87, .14); }
-.pcard__img { aspect-ratio: 4 / 4.2; background: #f2f5fa; }
+.pcard__img { position: relative; overflow: hidden; aspect-ratio: 4 / 4.2; background: #f2f5fa; }
+
+/* Sin stock (columna "Stock" del Excel): franja diagonal semitransparente, la foto se sigue viendo */
+.sin-stock {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150%;
+  padding: .35em 0;
+  transform: translate(-50%, -50%) rotate(-24deg);
+  background: rgba(15, 42, 94, .58);
+  color: rgba(255, 255, 255, .95);
+  font: 800 1.45rem/1 var(--font-head);
+  letter-spacing: .14em;
+  text-align: center;
+  text-transform: uppercase;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(1px);
+  backdrop-filter: blur(1px);
+}
+.pcard__aviso { margin: -6px 0 12px; font-size: .8rem; line-height: 1.4; color: var(--muted); }
+.pcard--sin-stock .pcard__price { color: var(--muted); }
+.btn-reservar {
+  width: 100%;
+  min-height: 46px;
+  border: 2px solid var(--navy);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--navy);
+  font: 700 .92rem var(--font-head);
+  cursor: pointer;
+  transition: background-color .2s, color .2s;
+}
+.btn-reservar:hover { background: var(--navy); color: var(--white); }
+.btn-reservar:focus-visible { outline: 3px solid #8fb3ff; outline-offset: 2px; }
+.pcard__reservada { margin: 0 0 8px; font: 700 .85rem var(--font-body); color: var(--wa-600); }
+.cart__reserva {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--ice);
+  color: var(--navy);
+  font: 700 .68rem var(--font-body);
+  font-style: normal;
+  vertical-align: 1px;
+}
+.reservas { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--ice-200); }
+.reservas__titulo { margin: 0 0 4px; font: 700 .95rem var(--font-head); color: var(--navy); }
+.review__item--reserva .review__sub { color: var(--navy); font-size: .85rem; }
 .pcard__img img { width: 100%; height: 100%; object-fit: cover; }
 .pcard__placeholder {
   height: 100%;
@@ -448,6 +497,7 @@ body:not(.has-items) .cart__cta { opacity: .55; }
 }
 
 @media (max-width: 600px) {
+  .sin-stock { font-size: 1rem; letter-spacing: .1em; }
   .steps-nav { padding: 14px 4px 12px; }
   .stepper { --c: 40px; }
   .stepper__icon { width: 21px; height: 21px; }

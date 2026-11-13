@@ -60,6 +60,9 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
 - La categoría se deduce del **nombre** del producto (reglas en `REGLAS_CATEGORIA`). Se excluyen las
   recuperadoras de gas y los combos armados (nombres con "+"). Fotos por palabras del nombre en `FOTOS`
   (sin foto → ícono "Foto próximamente").
+- **Sin stock / reservas**: columna **"Stock"** en la hoja WHATSAPP (sí / no, o una cantidad; vacía = hay stock).
+  El Worker la manda como `stock`. Sin stock: franja diagonal "SIN STOCK" sobre la foto, botón "Reservar la tuya";
+  la reserva va en el mismo pedido pero **no suma al total** y por WhatsApp llega como "Reservas (sin stock)".
 - **IVA y facturación**: los precios del Excel son **sin IVA** (se avisa en las categorías, el carrito y el resumen).
   En el último paso, "Facturación (opcional)": se puede dejar sin marcar (o desmarcar tocando de nuevo), Factura A (razón social, CUIT de 11 números, domicilio
   fiscal) / Factura B (nombre o razón social, DNI o CUIT, condición frente al IVA, domicilio). Con A o B se suma el
