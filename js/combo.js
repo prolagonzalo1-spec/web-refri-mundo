@@ -589,6 +589,7 @@
       t.push('*Reservas (sin stock)*');
       reservas.forEach(function (l) {
         t.push('• ' + l.cant + ' x ' + l.p.completo + ' — precio actual ' + precio(l.p.precio) + (l.cant > 1 ? ' c/u' : ''));
+        t.push('   _A pagar cuando ingrese_');
       });
     }
     t.push('');
