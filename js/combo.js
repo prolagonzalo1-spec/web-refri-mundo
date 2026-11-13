@@ -213,7 +213,8 @@
             precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
             cat: categoriaDe(p.nombre),
             foto: foto.src || '',
-            nota: foto.nota || ''
+            nota: foto.nota || '',
+            stock: p.stock !== false // columna "Stock" del Excel: sin stock = se puede reservar
           };
         });
     });
@@ -240,8 +241,15 @@
       .sort(function (a, b) { return ordenCategoria(a.cat) - ordenCategoria(b.cat); })
       .map(function (p) { return { p: p, cant: carrito[p.id], subtotal: p.precio * carrito[p.id] }; });
   }
+  function lineasCompra() {
+    return lineas().filter(function (l) { return l.p.stock; });
+  }
+  function lineasReserva() {
+    return lineas().filter(function (l) { return !l.p.stock; });
+  }
+  // El total es solo lo que hay en stock: las reservas se cobran cuando ingresan
   function total() {
-    return lineas().reduce(function (s, l) { return s + l.subtotal; }, 0);
+    return lineasCompra().reduce(function (s, l) { return s + l.subtotal; }, 0);
   }
   function iva() {
     return datos.tipoFactura ? Math.round(total() * IVA) : 0;
@@ -259,7 +267,11 @@
     renderCarrito();
     renderNav();
     document.querySelectorAll('[data-qty="' + id + '"]').forEach(function (el) { el.textContent = cant; });
-    document.querySelectorAll('[data-card="' + id + '"]').forEach(function (el) { el.classList.toggle('is-selected', cant > 0); });
+    document.querySelectorAll('[data-card="' + id + '"]').forEach(function (el) {
+      el.classList.toggle('is-selected', cant > 0);
+      var prod = productos.filter(function (x) { return x.id === id; })[0];
+      if (prod && !prod.stock) el.outerHTML = tarjeta(prod);
+    });
     if (pasos[pasoActual] && pasos[pasoActual].id === 'final') renderPaso();
   }
 
@@ -302,18 +314,25 @@
     var foto = p.foto
       ? '<img src="' + p.foto + '" alt="' + esc(p.completo) + '" loading="lazy">'
       : '<div class="pcard__placeholder"><svg aria-hidden="true"><use href="#i-tool"/></svg><span>Foto próximamente</span></div>';
-    return '<article class="pcard' + (cant ? ' is-selected' : '') + '" data-card="' + p.id + '">' +
-      '<div class="pcard__img">' + foto + '</div>' +
+    var controles = '<div class="qty" role="group" aria-label="Cantidad de ' + esc(p.nombre) + '">' +
+        '<button type="button" class="qty__btn" data-menos="' + p.id + '" aria-label="Quitar uno"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>' +
+        '<span class="qty__val" data-qty="' + p.id + '">' + cant + '</span>' +
+        '<button type="button" class="qty__btn qty__btn--add" data-mas="' + p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>' +
+      '</div>';
+    if (!p.stock) {
+      controles = cant
+        ? '<p class="pcard__reservada">Reservada ✓</p>' + controles
+        : '<button type="button" class="btn-reservar" data-mas="' + p.id + '">Reservar la tuya</button>';
+    }
+    return '<article class="pcard' + (cant ? ' is-selected' : '') + (p.stock ? '' : ' pcard--sin-stock') + '" data-card="' + p.id + '">' +
+      '<div class="pcard__img">' + foto + (p.stock ? '' : '<span class="sin-stock" aria-label="Sin stock">Sin stock</span>') + '</div>' +
       '<div class="pcard__body">' +
         '<h3 class="pcard__name">' + esc(p.nombre) + '</h3>' +
         (p.detalle ? '<p class="pcard__detail">' + esc(p.detalle) + '</p>' : '') +
         (p.nota ? '<p class="pcard__note">' + esc(p.nota) + '</p>' : '') +
         '<p class="pcard__price">' + precio(p.precio) + '</p>' +
-        '<div class="qty" role="group" aria-label="Cantidad de ' + esc(p.nombre) + '">' +
-          '<button type="button" class="qty__btn" data-menos="' + p.id + '" aria-label="Quitar uno"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>' +
-          '<span class="qty__val" data-qty="' + p.id + '">' + cant + '</span>' +
-          '<button type="button" class="qty__btn qty__btn--add" data-mas="' + p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button>' +
-        '</div>' +
+        (p.stock ? '' : '<p class="pcard__aviso">Sin stock por ahora. Reservala y sos de los primeros cuando ingrese.</p>') +
+        controles +
       '</div></article>';
   }
 
@@ -348,18 +367,28 @@
 
   function renderFinal() {
     var ls = lineas();
-    var resumen = ls.length
-      ? '<ul class="review">' + ls.map(function (l) {
-          return '<li class="review__item">' +
+    var compra = lineasCompra();
+    var reservas = lineasReserva();
+    var item = function (l) {
+          return '<li class="review__item' + (l.p.stock ? '' : ' review__item--reserva') + '">' +
             (l.p.foto ? '<img src="' + l.p.foto + '" alt="" class="review__img">' : '<span class="review__img review__img--empty"><svg aria-hidden="true"><use href="#i-tool"/></svg></span>') +
             '<div class="review__info"><strong>' + esc(l.p.completo) + '</strong><span>' + precio(l.p.precio) + ' c/u</span></div>' +
             '<div class="qty qty--sm"><button type="button" class="qty__btn" data-menos="' + l.p.id + '" aria-label="Quitar uno"><svg aria-hidden="true"><use href="#i-minus"/></svg></button>' +
             '<span class="qty__val" data-qty="' + l.p.id + '">' + l.cant + '</span>' +
             '<button type="button" class="qty__btn qty__btn--add" data-mas="' + l.p.id + '" aria-label="Agregar uno"><svg aria-hidden="true"><use href="#i-plus"/></svg></button></div>' +
-            '<strong class="review__sub">' + precio(l.subtotal) + '</strong></li>';
-        }).join('') + '</ul>' +
-        '<div class="review__total"><span>Productos</span><strong>' + precio(total()) + '</strong></div>' +
-        '<p class="review__iva">Precios sin IVA. Si necesitás factura (A o B), elegila más abajo y te sumamos el IVA.</p>'
+            '<strong class="review__sub">' + (l.p.stock ? precio(l.subtotal) : 'Reserva') + '</strong></li>';
+    };
+    var resumen = ls.length
+      ? (compra.length
+          ? '<ul class="review">' + compra.map(item).join('') + '</ul>' +
+            '<div class="review__total"><span>Productos</span><strong>' + precio(total()) + '</strong></div>' +
+            '<p class="review__iva">Precios sin IVA. Si necesitás factura (A o B), elegila más abajo y te sumamos el IVA.</p>'
+          : '') +
+        (reservas.length
+          ? '<div class="reservas"><h4 class="reservas__titulo">Reservas (sin stock)</h4>' +
+            '<ul class="review">' + reservas.map(item).join('') + '</ul>' +
+            '<p class="review__iva">No se cobran ahora: te avisamos apenas ingresen y te confirmamos el precio. Quedás primero en la lista.</p></div>'
+          : '')
       : '<div class="review-empty"><p>Todavía no sumaste productos a tu combo.</p><button type="button" class="btn btn--primary" data-ir="0">Empezar a elegir</button></div>';
 
     var pagos = PAGOS.map(function (p) {
@@ -397,6 +426,8 @@
       '</div>' +
       '<div class="review__total"><span>' + (tipo ? 'Total con IVA' : 'Total') + '</span><strong>' + precio(totalFinal()) + '</strong></div>' +
       (tipo ? '' : '<p class="review__iva">Precios sin IVA.</p>') +
+      (reservas.length ? '<p class="review__iva">+ ' + reservas.length + (reservas.length === 1 ? ' producto reservado' : ' productos reservados') +
+        ' (sin stock): no se cobra ahora.</p>' : '') +
       '</div>';
 
     var campos = CAMPOS.map(function (c) {
@@ -426,7 +457,8 @@
         '<p class="form-note">El envío es gratis a todo el país. La disponibilidad te la confirmamos por WhatsApp.</p></div>' +
         resumenFinal +
         '<p class="form-error" id="formError" role="alert" hidden></p>' +
-        '<button type="submit" class="btn btn--wa btn--lg final-submit"><svg class="icon" aria-hidden="true"><use href="#i-wa"/></svg> Comprar por WhatsApp</button>' +
+        '<button type="submit" class="btn btn--wa btn--lg final-submit"><svg class="icon" aria-hidden="true"><use href="#i-wa"/></svg> ' +
+          (compra.length ? 'Comprar por WhatsApp' : 'Reservar por WhatsApp') + '</button>' +
         '</form>' : '') +
       '<div class="step-actions"><button type="button" class="btn btn--outline" data-ir="' + (pasoActual - 1) + '"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg> Seguir eligiendo</button><span></span></div>';
   }
@@ -435,8 +467,8 @@
     var ls = lineas();
     $('cartList').innerHTML = ls.map(function (l) {
       return '<li class="cart__item"><span class="cart__qty">' + l.cant + '×</span>' +
-        '<span class="cart__name">' + esc(l.p.completo) + '</span>' +
-        '<span class="cart__price">' + precio(l.subtotal) + '</span>' +
+        '<span class="cart__name">' + esc(l.p.completo) + (l.p.stock ? '' : ' <em class="cart__reserva">Reserva</em>') + '</span>' +
+        '<span class="cart__price">' + (l.p.stock ? precio(l.subtotal) : '—') + '</span>' +
         '<button type="button" class="cart__remove" data-quitar="' + l.p.id + '" aria-label="Quitar ' + esc(l.p.nombre) + '"><svg aria-hidden="true"><use href="#i-trash"/></svg></button></li>';
     }).join('');
     $('cartEmpty').hidden = ls.length > 0;
@@ -544,12 +576,22 @@
   function mensaje() {
     var c = datos.campos;
     var t = [];
-    t.push('Hola Refri Mundo, quiero comprar este combo:');
+    var compra = lineasCompra();
+    var reservas = lineasReserva();
+    t.push(compra.length ? 'Hola Refri Mundo, quiero comprar este combo:' : 'Hola Refri Mundo, quiero reservar:');
     t.push('');
-    lineas().forEach(function (l) {
+    compra.forEach(function (l) {
       t.push('• ' + l.cant + ' x ' + l.p.completo + ' — ' + precio(l.p.precio) +
         (l.cant > 1 ? ' c/u = ' + precio(l.subtotal) : ''));
     });
+    if (reservas.length) {
+      if (compra.length) t.push('');
+      t.push('*Reservas (sin stock)*');
+      reservas.forEach(function (l) {
+        t.push('• ' + l.cant + ' x ' + l.p.completo + ' — precio actual ' + precio(l.p.precio) + (l.cant > 1 ? ' c/u' : ''));
+        t.push('   _A pagar cuando ingrese_');
+      });
+    }
     t.push('');
     t.push('Productos: ' + precio(total()));
     if (datos.tipoFactura) t.push('IVA 21%: ' + precio(iva()));
@@ -576,7 +618,8 @@
   function enviar() {
     var url = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(mensaje());
     if (typeof window.gtag === 'function') {
-      window.gtag('event', 'pedido_combo', { value: totalFinal(), currency: 'ARS', items: cantidadTotal(), factura: datos.tipoFactura || 'no' });
+      window.gtag('event', 'pedido_combo', { value: totalFinal(), currency: 'ARS', items: cantidadTotal(), factura: datos.tipoFactura || 'no',
+        reservas: lineasReserva().length });
     }
     var w = window.open(url, '_blank', 'noopener');
     if (!w) window.location.href = url;

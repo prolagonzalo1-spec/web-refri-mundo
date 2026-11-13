@@ -1,9 +1,10 @@
 // Refri Mundo — Precios desde el Excel de OneDrive (Cloudflare Worker)
 //
 // Descarga el Excel compartido en OneDrive, lee SOLO la hoja WHATSAPP
-// y devuelve nombre, precio (columna "VENTA WP") y si va a la web
+// y devuelve nombre, precio (columna "VENTA WP"), si va a la web
 // (columna cuyo título incluye "web", con sí / no; si no existe esa columna,
-// se ocultan las filas con el nombre pintado de rojo).
+// se ocultan las filas con el nombre pintado de rojo) y si hay stock
+// (columna cuyo título incluye "stock": sí / no, o una cantidad; vacía = hay stock).
 // Costos, ganancias y el resto de las hojas nunca salen de acá.
 //
 // Configuración en Cloudflare (Settings → Variables and Secrets):
@@ -258,8 +259,8 @@ async function leerHoja(bytes, nombreHoja) {
   }
 
   // Encabezados: "Productos" y "VENTA WP"
-  // y la columna que indica si va a la web (cualquier título que diga "web")
-  let filaEnc = 0, colNombre = 'A', colPrecio = 'L', colWeb = null;
+  // y las columnas que indican si va a la web y si hay stock (títulos que digan "web" y "stock")
+  let filaEnc = 0, colNombre = 'A', colPrecio = 'L', colWeb = null, colStock = null;
   for (const [n, celdas] of filas) {
     for (const [col, c] of Object.entries(celdas)) {
       const t = normalizar(c.texto);
@@ -274,12 +275,21 @@ async function leerHoja(bytes, nombreHoja) {
     }
   }
   for (const [n, celdas] of filas) {
-    if (colWeb || n > filaEnc + 3) break;
+    if ((colWeb && colStock) || n > filaEnc + 3) break;
     for (const [col, c] of Object.entries(celdas)) {
-      if (/\bweb\b/.test(normalizar(c.texto)) && col !== colNombre) colWeb = col;
+      const t = normalizar(c.texto);
+      if (col === colNombre) continue;
+      if (!colWeb && /\bweb\b/.test(t)) colWeb = col;
+      else if (!colStock && /\bstock\b/.test(t)) colStock = col;
     }
   }
   const esSi = (c) => !!c && /^(si|s|x|1|true|verdadero)$/.test(normalizar(c.texto));
+  // Stock: "no" (o 0) = sin stock; "sí", una cantidad mayor a 0 o la celda vacía = hay stock
+  const hayStock = (c) => {
+    if (!c || !c.texto) return true;
+    if (c.numero !== null && isFinite(c.numero)) return c.numero > 0;
+    return !/^(no|n|0|false|falso|sin stock|agotado)$/.test(normalizar(c.texto));
+  };
 
   const productos = [];
   for (const n of [...filas.keys()].sort((x, y) => x - y)) {
@@ -291,7 +301,8 @@ async function leerHoja(bytes, nombreHoja) {
     productos.push({
       nombre: nombre.texto,
       precio: precio && precio.numero !== null && isFinite(precio.numero) ? precio.numero : 0,
-      disponible: colWeb ? esSi(celdas[colWeb]) : !nombre.rojo
+      disponible: colWeb ? esSi(celdas[colWeb]) : !nombre.rojo,
+      stock: colStock ? hayStock(celdas[colStock]) : true
     });
   }
   return productos;
