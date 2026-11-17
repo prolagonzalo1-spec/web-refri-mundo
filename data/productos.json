@@ -1,111 +1,132 @@
 {
   "fuente": "respaldo",
-  "actualizado": "2026-10-24",
+  "actualizado": "2026-11-17",
   "productos": [
     {
       "nombre": "Bomba DVR 1A (60 L-Min)",
       "precio": 295257,
-      "disponible": true
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Bomba DVR 2A (130 L-Min) R32",
       "precio": 504560,
-      "disponible": true
+      "disponible": true,
+      "stock": false
     },
     {
       "nombre": "Bomba DVR 3A (170 L-Min) R32",
       "precio": 497184.48,
-      "disponible": true
+      "disponible": true,
+      "stock": false
     },
     {
       "nombre": "Bomba DVR 4A (272 L-Min)",
-      "precio": 665945.25,
-      "disponible": true
+      "precio": 668065.15,
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Supervac VP1 (58 L-Min)",
-      "precio": 215381.5,
-      "disponible": true
+      "precio": 224404.25,
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Supervac VP2 (114 L-Min)",
-      "precio": 276371.55,
-      "disponible": true
+      "precio": 307079.5,
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Vacuometro digital  CON APP",
-      "precio": 239932,
-      "disponible": true
+      "precio": 252560,
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Vacuometro digital  SIN APP",
       "precio": 203247.75,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
       "nombre": "Aceite DOSIVAC x 2u",
       "precio": 45475,
-      "disponible": true
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Maquina Recuperadora de Gas",
       "precio": 1657500,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
-      "nombre": "Manguera de alto vacío",
-      "precio": 69505.86,
-      "disponible": true
+      "nombre": "Manguera de alto vacÃ­o",
+      "precio": 95171.95,
+      "disponible": true,
+      "stock": false
     },
     {
       "nombre": "Manifold de aluminio analogico DOSIVAC R22 410 con manguera 120cm y estuche",
       "precio": 129625,
-      "disponible": true
+      "disponible": true,
+      "stock": true
     },
     {
-      "nombre": "Bomba DVR 3A (170 L-Min) R32 + Manguera alto vacío",
+      "nombre": "Bomba DVR 3A (170 L-Min) R32 + Manguera alto vacÃ­o",
       "precio": 615700.6950000001,
-      "disponible": false
+      "disponible": false,
+      "stock": false
     },
     {
       "nombre": "Recuperadora de gas",
       "precio": 1423500,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
       "nombre": "Manifold DIGITAL  BLUETOOTH Y PINZAS",
       "precio": 351071.25,
-      "disponible": true
+      "disponible": true,
+      "stock": false
     },
     {
       "nombre": "Manifold digital SIN APP",
       "precio": 242031.55,
-      "disponible": true
+      "disponible": true,
+      "stock": true
     },
     {
       "nombre": "Manifold DIGITAL (Dosivac) WP",
       "precio": 374476,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
       "nombre": "Bomba DVR 2A (130 L-Min) WP",
       "precio": 0,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
       "nombre": "Maquina lavadora WP",
       "precio": 0,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
-      "nombre": "Caja de herramientas 278. Pestañadora común",
+      "nombre": "Caja de herramientas 278. PestaÃ±adora comÃºn",
       "precio": 30780,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     },
     {
-      "nombre": "Caja de herramientas 806. Pestañadora excentrica",
+      "nombre": "Caja de herramientas 806. PestaÃ±adora excentrica",
       "precio": 0,
-      "disponible": false
+      "disponible": false,
+      "stock": true
     }
   ]
 }

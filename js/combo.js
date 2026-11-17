@@ -187,37 +187,37 @@
   }
 
   // ---------- Datos ----------
-  function cargar() {
-    var pedir = function (url) {
-      return fetch(url, { cache: 'no-store' }).then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
+  // Convierte el JSON (del Worker o del respaldo) en la lista de productos de la web
+  function procesar(json) {
+    return (json.productos || [])
+      .filter(function (p) {
+        return p && p.nombre && p.disponible !== false && Number(p.precio) > 0 &&
+          p.nombre.indexOf('+') === -1 && // los combos armados no van: cada cliente arma el suyo
+          !EXCLUIR.some(function (re) { return re.test(normalizar(p.nombre)); });
+      })
+      .map(function (p) {
+        var foto = fotoDe(p.nombre);
+        var web = nombreWeb(p.nombre);
+        return {
+          id: slug(p.nombre),
+          nombre: web.nombre,
+          detalle: web.detalle,
+          completo: web.completo,
+          precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
+          cat: categoriaDe(p.nombre),
+          foto: foto.src || '',
+          nota: foto.nota || '',
+          stock: p.stock !== false // columna "Stock" del Excel: sin stock = se puede reservar
+        };
       });
-    };
-    var inicio = PRECIOS_URL ? pedir(PRECIOS_URL).catch(function () { return pedir(RESPALDO_URL); }) : pedir(RESPALDO_URL);
-    return inicio.then(function (json) {
-      productos = (json.productos || [])
-        .filter(function (p) {
-          return p && p.nombre && p.disponible !== false && Number(p.precio) > 0 &&
-            p.nombre.indexOf('+') === -1 && // los combos armados no van: cada cliente arma el suyo
-            !EXCLUIR.some(function (re) { return re.test(normalizar(p.nombre)); });
-        })
-        .map(function (p) {
-          var foto = fotoDe(p.nombre);
-          var web = nombreWeb(p.nombre);
-          return {
-            id: slug(p.nombre),
-            nombre: web.nombre,
-            detalle: web.detalle,
-            completo: web.completo,
-            precio: Math.round(Number(p.precio)), // igual que lo muestra el Excel (sin decimales)
-            cat: categoriaDe(p.nombre),
-            foto: foto.src || '',
-            nota: foto.nota || '',
-            stock: p.stock !== false // columna "Stock" del Excel: sin stock = se puede reservar
-          };
-        });
-    });
+  }
+  // fetch con tiempo límite: si el Worker tarda (primera carga del Excel), no deja a nadie esperando
+  function pedir(url, ms) {
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var reloj = ctrl ? setTimeout(function () { ctrl.abort(); }, ms || 8000) : 0;
+    return fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { clearTimeout(reloj); return j; }, function (e) { clearTimeout(reloj); throw e; });
   }
 
   function armarPasos() {
@@ -654,15 +654,43 @@
     if (i >= 0) irA(i);
   });
 
-  cargar().then(function () {
+  // Dibuja el combo con la lista actual de productos, manteniendo el carrito y el paso
+  function construir(primeraVez) {
     armarPasos();
-    var inicial = pasoDelEnlace();
-    if (inicial >= 0) pasoActual = inicial;
+    if (primeraVez) {
+      var inicial = pasoDelEnlace();
+      if (inicial >= 0) pasoActual = inicial;
+    }
+    if (pasoActual > pasos.length - 1) pasoActual = pasos.length - 1;
     renderNav();
-    renderPaso();
+    // Si se está actualizando en vivo y la persona está escribiendo en el formulario, no se redibuja ese paso
+    var escribiendo = document.activeElement && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (primeraVez || !escribiendo) renderPaso();
     renderCarrito();
-  }).catch(function () {
+  }
+  function mostrarError() {
     $('comboMain').innerHTML = '<div class="combo-loading">No pudimos cargar los productos. ' +
       '<a href="https://wa.me/' + WHATSAPP + '" target="_blank" rel="noopener">Escribinos por WhatsApp</a> y te ayudamos.</div>';
+  }
+  // Apenas llegan los precios en vivo del Worker, se actualizan sin que la persona espere
+  function actualizarEnVivo() {
+    if (!PRECIOS_URL) return;
+    pedir(PRECIOS_URL, 12000).then(function (json) {
+      var nuevos = procesar(json);
+      if (nuevos.length) { productos = nuevos; construir(false); }
+    }).catch(function () {}); // si falla, se quedan los precios de respaldo
+  }
+
+  // 1) Mostrar el combo YA con los precios de respaldo (vienen con la página, instantáneos)
+  // 2) En paralelo, pedir los precios en vivo y actualizarlos cuando lleguen
+  pedir(RESPALDO_URL, 8000).then(function (json) {
+    productos = procesar(json);
+    construir(true);
+    actualizarEnVivo();
+  }).catch(function () {
+    // Si ni el respaldo cargó, se intenta directo el Worker; si tampoco, mensaje de ayuda
+    if (PRECIOS_URL) {
+      pedir(PRECIOS_URL, 12000).then(function (json) { productos = procesar(json); construir(true); }).catch(mostrarError);
+    } else { mostrarError(); }
   });
 })();

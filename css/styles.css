@@ -665,7 +665,10 @@ a.product:hover .product__cta { text-decoration: underline; text-underline-offse
 
 @media (max-width: 560px) {
   .container { padding-left: 16px; padding-right: 16px; }
-  .header__cta { padding: .55em .9em; }
+  /* El botón de WhatsApp del encabezado queda como ícono redondo para que entren logo + menú */
+  .header__cta__txt { display: none; }
+  .header__cta { width: 42px; height: 42px; padding: 0; gap: 0; }
+  .header__cta .icon { width: 20px; height: 20px; }
   .hero__actions { grid-template-columns: 1fr; }
   .hero__actions .btn { width: 100%; }
   .trust__grid { grid-template-columns: 1fr; }

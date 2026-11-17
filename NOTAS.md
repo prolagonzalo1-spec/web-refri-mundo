@@ -92,6 +92,15 @@ datos personales, vínculos comerciales privados). El dueño los explica en el c
 - Las tarjetas de productos del inicio llevan a su paso del combo: `combo.html#bombas`, `#manifolds`, `#vacuometros`.
 - Transición suave entre inicio y combo con View Transitions (`@view-transition` en `css/styles.css`).
 
+## Mejoras de rendimiento y pulido (2026-11-17)
+- **Respaldo previo**: tag `estable-2026-11-17` y rama `respaldo-estable-2026-11-17` (apuntan al sitio que andaba bien).
+- **Combo carga al instante**: `js/combo.js` muestra el combo con el respaldo `data/productos.json` y actualiza los
+  precios/stock en vivo cuando llegan (antes esperaba hasta ~8s al Worker). `pedir()` tiene tiempo límite.
+- **Header en celular**: el botón WhatsApp queda como ícono redondo en ≤560px (span `header__cta__txt`), junto al menú.
+- **Inicio más liviano**: `<head>` con charset primero + `preload` de la portada; portada 180→92 KB;
+  animación del despiece 2,3→1,4 MB (cuadros a 800×600).
+- Pendiente opcional conversado: unificar breakpoints, botones de la portada, sacar `material/` de lo publicado.
+
 ## Pendientes (en orden)
 1. ✅ **Nota en bombas DVR** (hecho): misma foto (`img/bomba-vacio.webp`) para DVR 1A, 2A, 3A y 4A, con la nota
    "Imagen ilustrativa de la línea DVR. Cambia la capacidad." En el Excel la 4A está mal escrita como "DVP 4A":
